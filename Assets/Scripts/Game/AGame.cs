@@ -3,12 +3,6 @@ using System.Collections.Generic;
 
 public abstract class AGame
 {
-    #region Consts
-
-    protected const int MaxStepsCount = GlobalParameters.MaximumStepsCount;
-
-    #endregion Consts
-
     #region Events
 
     public event EventHandler<EventArgs> eventStonesMatch;
@@ -21,7 +15,6 @@ public abstract class AGame
     #region Variables
 
     protected int id;
-    protected int puzzleId;
     protected int stepsCounter;
     protected int coinsCounter;
 
@@ -52,11 +45,6 @@ public abstract class AGame
     public int Id
     {
         get { return id; }
-    }
-
-    public int PuzzleId
-    {
-        get { return puzzleId; }
     }
 
     public int PlayedCount
@@ -106,12 +94,13 @@ public abstract class AGame
 
     #region Constructors
 
-    public AGame(GameBoardGrid gameBoardGrid, int id, int puzzleId, int stepsBest, int coinsBest, int stepsMinimum, int playedNumber, InscriptionBlock inscriptionBlockRed, InscriptionBlock inscriptionBlockBlue,
+    public AGame(GameBoardGrid gameBoardGrid, int id, int stepsBest, int coinsBest, int stepsMinimum, int playedNumber, InscriptionBlock inscriptionBlockRed, InscriptionBlock inscriptionBlockBlue,
                         TargetBlock targetBlockRed, TargetBlock targetBlockBlue, List<MobileBlock> mobileBlocks, List<StaticBlock> staticBlocks, Stack<GameplayStep> allMoves)
     {
+        GameStartData gameStartData= null;
+
         this.gameBoardGrid = gameBoardGrid;
         this.id = id;
-        this.puzzleId = puzzleId;
         this.stepsCounter = 0;
         this.coinsCounter = 0;
 
@@ -119,7 +108,7 @@ public abstract class AGame
         this.playedNumber = playedNumber;
 
         this.backStepsCounter = 0;
-        this.backStepsMaximum = MaxStepsCount;
+        this.backStepsMaximum = gameStartData.MaximumStepsCount;
 
         this.inscriptionBlockRed = inscriptionBlockRed;
         this.inscriptionBlockBlue = inscriptionBlockBlue;
@@ -153,13 +142,13 @@ public abstract class AGame
 
     protected void ThrowFinalTransformEvent()
     {
-        EventHandler<EventArgs> temp_final_transform_event = eventFinalTransform;
+        EventHandler<EventArgs> tempFinalTransformEvent = eventFinalTransform;
 
-        if (temp_final_transform_event != null)
-            temp_final_transform_event(this, new EventArgs());
-
+        if (tempFinalTransformEvent != null)
+        {
+            tempFinalTransformEvent(this, new EventArgs());
+        }
     }
-
 
     protected void ThrowStonesMatchEvent()
     {
@@ -167,48 +156,54 @@ public abstract class AGame
         CalculateCoins();
         gameDataDynamic.UpdateBestCoins(coinsCounter);
 
-        EventHandler<EventArgs> temp_stone_match_event = eventStonesMatch;
+        EventHandler<EventArgs> tempBlockMatchEvent = eventStonesMatch;
 
-        if (temp_stone_match_event != null)
-            temp_stone_match_event(this, new EventArgs());
+        if (tempBlockMatchEvent != null)
+        {
+            tempBlockMatchEvent(this, new EventArgs());
+        }
 
     }
 
     protected void ThrowTransitOverEvent()
     {
-        EventHandler<EventArgs> temp_transform_over_event = eventTransitOver;
+        EventHandler<EventArgs> tempTransformOverEvent = eventTransitOver;
 
-        if (temp_transform_over_event != null)
-            temp_transform_over_event(this, new EventArgs());
+        if (tempTransformOverEvent != null)
+        {
+            tempTransformOverEvent(this, new EventArgs());
+        }
 
     }
 
-    protected void ThrowErrorEvent(EErrorType _error_key)
+    protected void ThrowErrorEvent(EErrorType errorKey)
     {
-        EventHandler<GameErrorEventArgs> temp_error_event = eventError;
+        EventHandler<GameErrorEventArgs> tempErrorEvent = eventError;
 
-        if (temp_error_event != null)
-            temp_error_event(this, new GameErrorEventArgs(_error_key));
+        if (tempErrorEvent != null)
+        {
+            tempErrorEvent(this, new GameErrorEventArgs(errorKey));
+        }
 
     }
 
     protected void CalculateCoins()
     {
-        float level_number = id;
-        float game_minimal_steps = stepsMinimum;
-        float player_steps = StepsCount;
+        float levelNumber = id;
+        float gameMinimalSteps = stepsMinimum;
+        float playerSteps = StepsCount;
 
         if (stepsMinimum > StepsCount)
         {
             //BugReport.Instance.MinimumSteps(id, stepsMinimum, StepsCount);
 
-            game_minimal_steps = StepsCount;
-            player_steps = stepsMinimum;
+            gameMinimalSteps = StepsCount;
+            playerSteps = stepsMinimum;
         }
 
-        float main_factor_float = level_number + 3 * game_minimal_steps - player_steps;
+        float mainFactorFloat = levelNumber + 3 * gameMinimalSteps - playerSteps;
 
-        coinsCounter = main_factor_float > (level_number / 2.0f) ? (int)main_factor_float : (int)(level_number / 2.0f);
+        coinsCounter = mainFactorFloat > (levelNumber / 2.0f) ? (int)mainFactorFloat : (int)(levelNumber / 2.0f);
     }
 
     protected abstract void MoveUP();
@@ -225,7 +220,7 @@ public abstract class AGame
 
     public abstract void RemoveStoneObjects();
 
-    public abstract void MoveStoneObjects(float _lerp_alpha, float _min_distance);
+    public abstract void MoveStoneObjects(float lerpAlpha, float minDistance);
 
     protected abstract void StartStoneMatchEffects();
 

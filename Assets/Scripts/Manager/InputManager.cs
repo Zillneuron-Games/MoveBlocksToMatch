@@ -5,49 +5,45 @@ public class InputManager : MonoBehaviour
 {
     public static InputManager Instance;
 
-    float TouchFirstPosX, TouchFirstPosY;
-    float TouchSecondPosX, TouchSecondPosY;
-    float TouchDistance;
+    private float TouchFirstPosX;
+    private float TouchFirstPosY;
+    private float TouchSecondPosX;
+    private float TouchSecondPosY;
+    private float TouchDistance;
 
-    public bool b_active;
+    private bool isActive;
 
     public event EventHandler<InputEventArgs> eventInput;
 
-    public void Initialize(SoundController _sound_controller)
+    private void Start()
     {
-        b_active = true;
+        isActive = true;
         TouchDistance = 60;
-
-        foreach (Button3D _button in buttons3D)
-        {
-            _button.buttonClick += Button3DClick;
-            _button.eventInput += InputListener;
-            _button.Initialize(_sound_controller);
-            _button.Enable();
-        }
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
         InputListener();
     }
 
     public void Enable()
     {
-        b_active = true;
-    }
-    public void Disable()
-    {
-        b_active = false;
+        isActive = true;
     }
 
-    private void ThrowInputEvent(InputKey _input_state)
+    public void Disable()
+    {
+        isActive = false;
+    }
+
+    private void ThrowInputEvent(EInputEvent inputState)
     {
         EventHandler<InputEventArgs> tempInput = eventInput;
 
         if (tempInput != null)
-            tempInput(this, new InputEventArgs(_input_state));
+        {
+            tempInput(this, new InputEventArgs(inputState));
+        }
     }
 
     private void InputListener()
@@ -70,12 +66,12 @@ public class InputManager : MonoBehaviour
                     {
                         if (TouchFirstPosX - TouchSecondPosX < 0)
                         {
-                            ThrowInputEvent(InputKey.RIGHT);
+                            ThrowInputEvent(EInputEvent.Right);
                             return;
                         }
                         else if (TouchFirstPosX - TouchSecondPosX > 0)
                         {
-                            ThrowInputEvent(InputKey.LEFT);
+                            ThrowInputEvent(EInputEvent.Left);
                             return;
                         }
 
@@ -84,12 +80,12 @@ public class InputManager : MonoBehaviour
                     {
                         if (TouchFirstPosY - TouchSecondPosY < 0)
                         {
-                            ThrowInputEvent(InputKey.UP);
+                            ThrowInputEvent(EInputEvent.Up);
                             return;
                         }
                         else if (TouchFirstPosY - TouchSecondPosY > 0)
                         {
-                            ThrowInputEvent(InputKey.DOWN);
+                            ThrowInputEvent(EInputEvent.Down);
                             return;
                         }
                     }
@@ -104,78 +100,58 @@ public class InputManager : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
         {
-            ThrowInputEvent(InputKey.UP);
+            ThrowInputEvent(EInputEvent.Up);
             return;
         }
         else if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
         {
-            ThrowInputEvent(InputKey.DOWN);
+            ThrowInputEvent(EInputEvent.Down);
             return;
         }
         else if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            ThrowInputEvent(InputKey.LEFT);
+            ThrowInputEvent(EInputEvent.Left);
             return;
         }
         else if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
         {
-            ThrowInputEvent(InputKey.RIGHT);
+            ThrowInputEvent(EInputEvent.Right);
             return;
         }
         else if (Input.GetKeyDown(KeyCode.Escape))
         {
-            ThrowInputEvent(InputKey.ESCAPE);
+            ThrowInputEvent(EInputEvent.Escape);
             return;
         }
         else if (Input.GetKeyDown(KeyCode.N))
         {
-            ThrowInputEvent(InputKey.NEXT);
+            ThrowInputEvent(EInputEvent.Next);
             return;
         }
         else if (Input.GetKeyDown(KeyCode.M))
         {
-            ThrowInputEvent(InputKey.MENU);
+            ThrowInputEvent(EInputEvent.Menu);
             return;
         }
         else if (Input.GetKeyDown(KeyCode.P))
         {
-            ThrowInputEvent(InputKey.PAUSE);
+            ThrowInputEvent(EInputEvent.Pause);
             return;
         }
         else if (Input.GetKeyDown(KeyCode.G))
         {
-            ThrowInputEvent(InputKey.PLAY);
+            ThrowInputEvent(EInputEvent.Play);
             return;
         }
     }
 
     private void InputListener(object sender, InputEventArgs args)
     {
-        if (!b_active)
-            return;
-
-        ThrowInputEvent(args.KEY);
-    }
-
-    private void Button3DClick(object sender, EventArgs args)
-    {
-        if (!b_active)
-            return;
-
-        Button3D _sender_button = sender as Button3D;
-
-        if (_sender_button != null)
+        if (!isActive)
         {
-            _sender_button.StartMoveAction();
+            return;
         }
-    }
 
-    private void OnDestroy()
-    {
-        foreach (Button3D _button in buttons3D)
-        {
-            _button.buttonClick -= Button3DClick;
-            _button.eventInput -= InputListener;
-        }
+        ThrowInputEvent(args.InputEvent);
     }
 }

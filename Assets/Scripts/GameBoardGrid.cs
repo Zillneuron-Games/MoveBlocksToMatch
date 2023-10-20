@@ -79,7 +79,7 @@ public class GameBoardGrid
                     if (rootElement.Y + 1 < gridHight)
                     {
 
-                        GridElement temp_point = new GridElement(rootElement.X, rootElement.Z + 1);
+                        GridElement temp_point = new GridElement(rootElement.X, rootElement.Y + 1);
 
                         rootElement.AddReferencePoint(EGridElementNeighborSide.Top, temp_point);
                         rootElement.GetReferencePoint(EGridElementNeighborSide.Top).AddReferencePoint(EGridElementNeighborSide.Bottom, rootElement);

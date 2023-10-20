@@ -8,9 +8,9 @@ public class TripleGame : AGame
 
     private TargetBlock targetBlockYellow;
 
-    public TripleGame(GameBoardGrid gameBoardGrid, int id, int puzzleId, int stepsBest, int coinsBest, int stepsMinimum, int playedNumber, InscriptionBlock inscriptionBlockRed, InscriptionBlock inscriptionBlockBlue, InscriptionBlock inscriptionBlockYellow,
+    public TripleGame(GameBoardGrid gameBoardGrid, int id, int stepsBest, int coinsBest, int stepsMinimum, int playedNumber, InscriptionBlock inscriptionBlockRed, InscriptionBlock inscriptionBlockBlue, InscriptionBlock inscriptionBlockYellow,
                         TargetBlock targetBlockRed, TargetBlock targeBlockBlue, TargetBlock targetBlockYellow, List<MobileBlock> mobileBlock, List<StaticBlock> staticBlocks, Stack<GameplayStep> allMoves)
-                        : base(gameBoardGrid, id, puzzleId, stepsBest, coinsBest, stepsMinimum, playedNumber, inscriptionBlockRed, inscriptionBlockBlue, targetBlockRed, targeBlockBlue, mobileBlock, staticBlocks, allMoves)
+                        : base(gameBoardGrid, id, stepsBest, coinsBest, stepsMinimum, playedNumber, inscriptionBlockRed, inscriptionBlockBlue, targetBlockRed, targeBlockBlue, mobileBlock, staticBlocks, allMoves)
     {
         this.inscriptionBlockYellow = inscriptionBlockYellow;
         this.targetBlockYellow = targetBlockYellow;
@@ -420,6 +420,7 @@ public class TripleGame : AGame
 
     public override void MoveStoneObjects(float lerpAlpha, float minDistance)
     {
+        GameStartData gameStartData = null;
         List<ABlock> allBlocks = new List<ABlock>();
 
         allBlocks.Add(inscriptionBlockRed);
@@ -465,7 +466,7 @@ public class TripleGame : AGame
             return;
         }
 
-        if (stepsCounter > MaxStepsCount)
+        if (stepsCounter > gameStartData.MaximumStepsCount)
         {
             ThrowErrorEvent(EErrorType.StepsCount);
         }
