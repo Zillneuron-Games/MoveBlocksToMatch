@@ -7,6 +7,7 @@ public class GameBoardGrid
 
     private int gridLength;
     private int gridHight;
+    private IGridElementObjectProvider gridElementObjectProvider;
     private GridElement rootElement;
 
     #endregion Variables
@@ -32,11 +33,12 @@ public class GameBoardGrid
 
     #region Constructors
 
-    public GameBoardGrid(int gridLength, int gridHight)
+    public GameBoardGrid(int gridLength, int gridHight, IGridElementObjectProvider gridElementObjectProvider)
     {
         this.gridLength = gridLength;
         this.gridHight = gridHight;
-        this.rootElement = new GridElement(0, 0);
+        this.gridElementObjectProvider = gridElementObjectProvider;
+        this.rootElement = new GridElement(0, 0, gridElementObjectProvider);
 
         List<GridElement> frontElements = new List<GridElement>();
 
@@ -65,7 +67,7 @@ public class GameBoardGrid
                 {
                     if (rootElement.Y - 1 >= 0)
                     {
-                        GridElement temp_point = new GridElement(rootElement.X, rootElement.Y - 1);
+                        GridElement temp_point = new GridElement(rootElement.X, rootElement.Y - 1, gridElementObjectProvider);
 
                         rootElement.AddReferencePoint(EGridElementNeighborSide.Bottom, temp_point);
                         rootElement.GetReferencePoint(EGridElementNeighborSide.Bottom).AddReferencePoint(EGridElementNeighborSide.Top, rootElement);
@@ -79,7 +81,7 @@ public class GameBoardGrid
                     if (rootElement.Y + 1 < gridHight)
                     {
 
-                        GridElement temp_point = new GridElement(rootElement.X, rootElement.Y + 1);
+                        GridElement temp_point = new GridElement(rootElement.X, rootElement.Y + 1, gridElementObjectProvider);
 
                         rootElement.AddReferencePoint(EGridElementNeighborSide.Top, temp_point);
                         rootElement.GetReferencePoint(EGridElementNeighborSide.Top).AddReferencePoint(EGridElementNeighborSide.Bottom, rootElement);
@@ -92,7 +94,7 @@ public class GameBoardGrid
                 {
                     if (rootElement.X - 1 >= 0)
                     {
-                        GridElement temp_point = new GridElement(rootElement.X - 1, rootElement.Y);
+                        GridElement temp_point = new GridElement(rootElement.X - 1, rootElement.Y, gridElementObjectProvider);
 
                         rootElement.AddReferencePoint(EGridElementNeighborSide.Left, temp_point);
                         rootElement.GetReferencePoint(EGridElementNeighborSide.Left).AddReferencePoint(EGridElementNeighborSide.Right, rootElement);
@@ -105,7 +107,7 @@ public class GameBoardGrid
                 {
                     if (rootElement.X + 1 < gridLength)
                     {
-                        GridElement temp_point = new GridElement(rootElement.X + 1, rootElement.Y);
+                        GridElement temp_point = new GridElement(rootElement.X + 1, rootElement.Y, gridElementObjectProvider);
 
                         rootElement.AddReferencePoint(EGridElementNeighborSide.Right, temp_point);
                         rootElement.GetReferencePoint(EGridElementNeighborSide.Right).AddReferencePoint(EGridElementNeighborSide.Left, rootElement);
@@ -122,7 +124,7 @@ public class GameBoardGrid
                 {
                     if (rootElement.GetReferencePoint(EGridElementNeighborSide.Bottom).GetReferencePoint(EGridElementNeighborSide.Left) == null && rootElement.GetReferencePoint(EGridElementNeighborSide.Left).GetReferencePoint(EGridElementNeighborSide.Bottom) == null)
                     {
-                        GridElement tempElement = new GridElement(rootElement.X - 1, rootElement.Y - 1);
+                        GridElement tempElement = new GridElement(rootElement.X - 1, rootElement.Y - 1, gridElementObjectProvider);
 
                         rootElement.GetReferencePoint(EGridElementNeighborSide.Bottom).AddReferencePoint(EGridElementNeighborSide.Left, tempElement);
                         rootElement.GetReferencePoint(EGridElementNeighborSide.Left).AddReferencePoint(EGridElementNeighborSide.Bottom, tempElement);
@@ -142,7 +144,7 @@ public class GameBoardGrid
                 {
                     if (rootElement.GetReferencePoint(EGridElementNeighborSide.Left).GetReferencePoint(EGridElementNeighborSide.Top) == null && rootElement.GetReferencePoint(EGridElementNeighborSide.Top).GetReferencePoint(EGridElementNeighborSide.Left) == null)
                     {
-                        GridElement tempElement = new GridElement(rootElement.X - 1, rootElement.Y + 1);
+                        GridElement tempElement = new GridElement(rootElement.X - 1, rootElement.Y + 1, gridElementObjectProvider);
 
                         rootElement.GetReferencePoint(EGridElementNeighborSide.Left).AddReferencePoint(EGridElementNeighborSide.Top, tempElement);
                         rootElement.GetReferencePoint(EGridElementNeighborSide.Top).AddReferencePoint(EGridElementNeighborSide.Left, tempElement);
@@ -164,7 +166,7 @@ public class GameBoardGrid
                 {
                     if (rootElement.GetReferencePoint(EGridElementNeighborSide.Top).GetReferencePoint(EGridElementNeighborSide.Right) == null && rootElement.GetReferencePoint(EGridElementNeighborSide.Right).GetReferencePoint(EGridElementNeighborSide.Top) == null)
                     {
-                        GridElement tempElement = new GridElement(rootElement.X + 1, rootElement.Y + 1);
+                        GridElement tempElement = new GridElement(rootElement.X + 1, rootElement.Y + 1, gridElementObjectProvider);
 
                         rootElement.GetReferencePoint(EGridElementNeighborSide.Top).AddReferencePoint(EGridElementNeighborSide.Right, tempElement);
                         rootElement.GetReferencePoint(EGridElementNeighborSide.Right).AddReferencePoint(EGridElementNeighborSide.Top, tempElement);
@@ -185,7 +187,7 @@ public class GameBoardGrid
                 {
                     if (rootElement.GetReferencePoint(EGridElementNeighborSide.Right).GetReferencePoint(EGridElementNeighborSide.Bottom) == null && rootElement.GetReferencePoint(EGridElementNeighborSide.Bottom).GetReferencePoint(EGridElementNeighborSide.Right) == null)
                     {
-                        GridElement tempElement = new GridElement(rootElement.X + 1, rootElement.Y - 1);
+                        GridElement tempElement = new GridElement(rootElement.X + 1, rootElement.Y - 1, gridElementObjectProvider);
 
                         rootElement.GetReferencePoint(EGridElementNeighborSide.Right).AddReferencePoint(EGridElementNeighborSide.Bottom, tempElement);
                         rootElement.GetReferencePoint(EGridElementNeighborSide.Bottom).AddReferencePoint(EGridElementNeighborSide.Right, tempElement);

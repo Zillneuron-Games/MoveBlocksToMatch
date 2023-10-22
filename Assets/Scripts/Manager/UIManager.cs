@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
-    public static UIManager Instance;
+    public static UIManager Instance { get; private set; }
 
     private int steps;
     private int coins;
@@ -14,6 +14,20 @@ public class UIManager : MonoBehaviour
     private int minimalSteps;
 
     private EGameplayState gameMode;
+
+    private void Awake()
+    {
+        // If there is an instance, and it's not me, delete myself.
+
+        if (Instance != null && Instance != this)
+        {
+            Destroy(this);
+        }
+        else
+        {
+            Instance = this;
+        }
+    }
 
     public bool ChangeGameplayState(EGameplayState gameMode, Action nextAction)
     {
@@ -41,9 +55,7 @@ public class UIManager : MonoBehaviour
         this.bestSteps = bestSteps;
         this.bestCoins = bestCoins;
 
-        GameStartData gameStartData = null;
-
-        if (this.bestSteps < gameStartData.MaximumStepsCount)
+        if (this.bestSteps < GameStartData.MaximumStepsCount)
         {
 
         }
@@ -52,14 +64,14 @@ public class UIManager : MonoBehaviour
 
         }
 
-        if (gameStartData.NextToLoadGame == gameStartData.GamesCount)
-        {
+        //if (gameStartData.NextToLoadGame == GameStartData.GamesCount)
+        //{
            
-        }
-        else
-        {
+        //}
+        //else
+        //{
            
-        }
+        //}
     }
 
     public void UpdateErrorInformation(EErrorType errorType)

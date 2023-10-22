@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class InputManager : MonoBehaviour
 {
-    public static InputManager Instance;
+    public static InputManager Instance { get; private set; }
 
     private float TouchFirstPosX;
     private float TouchFirstPosY;
@@ -14,6 +14,20 @@ public class InputManager : MonoBehaviour
     private bool isActive;
 
     public event EventHandler<InputEventArgs> eventInput;
+
+    private void Awake()
+    {
+        // If there is an instance, and it's not me, delete myself.
+
+        if (Instance != null && Instance != this)
+        {
+            Destroy(this);
+        }
+        else
+        {
+            Instance = this;
+        }
+    }
 
     private void Start()
     {

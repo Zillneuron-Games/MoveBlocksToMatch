@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 
-public class GameplayManager : MonoBehaviour
+public class GameplayManager : MonoBehaviour, IGridElementObjectProvider
 {
     #region Events
 
@@ -20,23 +20,25 @@ public class GameplayManager : MonoBehaviour
     private AsyncOperation sceneLoader;
 
     private float gameEndPauseTime;
-    private float stonesMoveSpeed;
-    private float stonesMinDistance;
+    private float blocksMoveSpeed;
+    private float blocksMinDistance;
 
     #region Inspector
 
-    public GameObject inscriptionStoneRed;
-    public GameObject inscriptionStoneBlue;
-    public GameObject inscriptionStoneYellow;
-    public GameObject inscriptionStoneGreen;
+    public GameObject inscriptionRed;
+    public GameObject inscriptionBlue;
+    public GameObject inscriptionYellow;
+    public GameObject inscriptionGreen;
 
     public GameObject targetRed;
     public GameObject targetBlue;
     public GameObject targetYellow;
     public GameObject targetGreen;
 
-    public GameObject[] mobileStones;
-    public GameObject[] staticStones;
+    public GameObject[] mobileBlocks;
+    public GameObject[] staticBlocks;
+
+    public GameObjectRow[] gridBlocks;
 
     #endregion Inspector
 
@@ -62,13 +64,15 @@ public class GameplayManager : MonoBehaviour
 
     private IEnumerator LoadScene()
     {
-        stonesMoveSpeed = 16.0f;
-        stonesMinDistance = 0.05f;
+        gameStartData = GameStartData.CreateInstance();
+
+        blocksMoveSpeed = 16.0f;
+        blocksMinDistance = 0.05f;
 
         SoundManager.Instance.Switch(gameStartData.SoundState);
         InputManager.Instance.eventInput += HandleInputEvent;
 
-        gameBoardGrid = new GameBoardGrid(7, 5);
+        gameBoardGrid = new GameBoardGrid(7, 5, this);
 
         CreateGame(gameStartData.NextToLoadGame);
 
@@ -120,11 +124,11 @@ public class GameplayManager : MonoBehaviour
 
             SortedDictionary<int, Vector2> allBlocksPositions = new SortedDictionary<int, Vector2>();
 
-            InscriptionBlock inscriptionBlockRed = new InscriptionBlock(indexCounter, inscriptionStoneRed, gameBoardGrid[(int)gameData.InscriptionBlockPositionRed.x, (int)gameData.InscriptionBlockPositionRed.y]);
+            InscriptionBlock inscriptionBlockRed = new InscriptionBlock(indexCounter, inscriptionRed, gameBoardGrid[(int)gameData.InscriptionBlockPositionRed.x, (int)gameData.InscriptionBlockPositionRed.y]);
             allBlocksPositions.Add(indexCounter, gameData.InscriptionBlockPositionRed);
             indexCounter++;
 
-            InscriptionBlock inscriptionBlockBlue = new InscriptionBlock(indexCounter, inscriptionStoneBlue, gameBoardGrid[(int)gameData.InscriptionBlockPositionBlue.x, (int)gameData.InscriptionBlockPositionBlue.y]);
+            InscriptionBlock inscriptionBlockBlue = new InscriptionBlock(indexCounter, inscriptionBlue, gameBoardGrid[(int)gameData.InscriptionBlockPositionBlue.x, (int)gameData.InscriptionBlockPositionBlue.y]);
             allBlocksPositions.Add(indexCounter, gameData.InscriptionBlockPositionBlue);
             indexCounter++;
 
@@ -144,7 +148,7 @@ public class GameplayManager : MonoBehaviour
 
                 foreach (Vector2 pos in gameData.MobileBlocksPositions)
                 {
-                    MobileBlock tempBlock = new MobileBlock(indexCounter, mobileStones[mobileBlocksIndexCounter], gameBoardGrid[(int)pos.x, (int)pos.y]);
+                    MobileBlock tempBlock = new MobileBlock(indexCounter, this.mobileBlocks[mobileBlocksIndexCounter], gameBoardGrid[(int)pos.x, (int)pos.y]);
                     mobileBlocks.Add(tempBlock);
                     allBlocksPositions.Add(indexCounter, pos);
                     indexCounter++;
@@ -162,7 +166,7 @@ public class GameplayManager : MonoBehaviour
 
                 foreach (Vector2 pos in gameData.StaticBlocksPositions)
                 {
-                    StaticBlock tempBlock = new StaticBlock(indexCounter, staticStones[staticBlocksIndexCounter], gameBoardGrid[(int)pos.x, (int)pos.y]);
+                    StaticBlock tempBlock = new StaticBlock(indexCounter, this.staticBlocks[staticBlocksIndexCounter], gameBoardGrid[(int)pos.x, (int)pos.y]);
                     staticBlocks.Add(tempBlock);
                     indexCounter++;
                     staticBlocksIndexCounter++;
@@ -180,15 +184,15 @@ public class GameplayManager : MonoBehaviour
 
             GameObject inscriptionBlockThird = null;
             GameObject targetThird = null;
-            ChooseRandomStone(gameData.Id, out inscriptionBlockThird, out targetThird);
+            ChooseRandomBlock(gameData.Id, out inscriptionBlockThird, out targetThird);
 
             SortedDictionary<int, Vector2> allBlocksPositions = new SortedDictionary<int, Vector2>();
 
-            InscriptionBlock inscriptionBlockRed = new InscriptionBlock(indexCounter, inscriptionStoneRed, gameBoardGrid[(int)gameData.InscriptionBlockPositionRed.x, (int)gameData.InscriptionBlockPositionRed.y]);
+            InscriptionBlock inscriptionBlockRed = new InscriptionBlock(indexCounter, inscriptionRed, gameBoardGrid[(int)gameData.InscriptionBlockPositionRed.x, (int)gameData.InscriptionBlockPositionRed.y]);
             allBlocksPositions.Add(indexCounter, gameData.InscriptionBlockPositionRed);
             indexCounter++;
 
-            InscriptionBlock inscriptionBlockBlue = new InscriptionBlock(indexCounter, inscriptionStoneBlue, gameBoardGrid[(int)gameData.InscriptionBlockPositionBlue.x, (int)gameData.InscriptionBlockPositionBlue.y]);
+            InscriptionBlock inscriptionBlockBlue = new InscriptionBlock(indexCounter, inscriptionBlue, gameBoardGrid[(int)gameData.InscriptionBlockPositionBlue.x, (int)gameData.InscriptionBlockPositionBlue.y]);
             allBlocksPositions.Add(indexCounter, gameData.InscriptionBlockPositionBlue);
             indexCounter++;
 
@@ -215,7 +219,7 @@ public class GameplayManager : MonoBehaviour
 
                 foreach (Vector2 pos in gameData.MobileBlocksPositions)
                 {
-                    MobileBlock tempBlock = new MobileBlock(indexCounter, mobileStones[mobileBlocksIndexCounter], gameBoardGrid[(int)pos.x, (int)pos.y]);
+                    MobileBlock tempBlock = new MobileBlock(indexCounter, this.mobileBlocks[mobileBlocksIndexCounter], gameBoardGrid[(int)pos.x, (int)pos.y]);
                     mobileBlocks.Add(tempBlock);
                     allBlocksPositions.Add(indexCounter, pos);
                     indexCounter++;
@@ -233,7 +237,7 @@ public class GameplayManager : MonoBehaviour
 
                 foreach (Vector2 pos in gameData.StaticBlocksPositions)
                 {
-                    StaticBlock tempBlock = new StaticBlock(indexCounter, staticStones[staticBlocksIndexCounter], gameBoardGrid[(int)pos.x, (int)pos.y]);
+                    StaticBlock tempBlock = new StaticBlock(indexCounter, this.staticBlocks[staticBlocksIndexCounter], gameBoardGrid[(int)pos.x, (int)pos.y]);
                     staticBlocks.Add(tempBlock);
                     indexCounter++;
                     staticBlocksIndexCounter++;
@@ -246,10 +250,10 @@ public class GameplayManager : MonoBehaviour
             currentGame = new TripleGame(gameBoardGrid, gameData.Id, gameDataDynamic.BestSteps, gameDataDynamic.BestCoins, gameData.MinimumStepsCount,gameDataDynamic.GameCount, inscriptionBlockRed, inscriptionBlockBlue, inscriptionBlockYellow,targetBlockRed, targetBlockBlue, targetBlockYellow,mobileBlocks, staticBlocks, allStepsContainer);
         }
 
-        currentGame.PutStoneObjects();
+        currentGame.PutBlockObjects();
 
         currentGame.eventFinalTransform += HandleFinalTransform;
-        currentGame.eventStonesMatch += HandleStonesMatch;
+        currentGame.eventBlocksMatch += HandleBlocksMatch;
         currentGame.eventTransitOver += HandleTransitOver;
         currentGame.eventError += HandleError;
 
@@ -262,10 +266,10 @@ public class GameplayManager : MonoBehaviour
 
     private void DestroyGame()
     {
-        currentGame.RemoveStoneObjects();
+        currentGame.RemoveBlockObjects();
 
         currentGame.eventFinalTransform -= HandleFinalTransform;
-        currentGame.eventStonesMatch -= HandleStonesMatch;
+        currentGame.eventBlocksMatch -= HandleBlocksMatch;
         currentGame.eventTransitOver -= HandleTransitOver;
         currentGame.eventError -= HandleError;
 
@@ -277,16 +281,16 @@ public class GameplayManager : MonoBehaviour
         ChangeGameplayState(EGameplayState.End);
     }
 
-    private void ChooseRandomStone(int gameId, out GameObject currentBlock, out GameObject currentTarget)
+    private void ChooseRandomBlock(int gameId, out GameObject currentBlock, out GameObject currentTarget)
     {
         if (gameId % 2 == 0)
         {
-            currentBlock = inscriptionStoneGreen;
+            currentBlock = inscriptionGreen;
             currentTarget = targetGreen;
         }
         else
         {
-            currentBlock = inscriptionStoneYellow;
+            currentBlock = inscriptionYellow;
             currentTarget = targetYellow;
         }
     }
@@ -300,7 +304,7 @@ public class GameplayManager : MonoBehaviour
 
     private void UpdateTransit()
     {
-        currentGame.MoveStoneObjects(Time.deltaTime * stonesMoveSpeed, stonesMinDistance);
+        currentGame.MoveBlockObjects(Time.deltaTime * blocksMoveSpeed, blocksMinDistance);
     }
 
     private void UpdatePause()
@@ -324,42 +328,42 @@ public class GameplayManager : MonoBehaviour
             case EInputEvent.Up:
                 if (gameplayState == EGameplayState.Gameplay)
                 {
-                    currentGame.MoveStones(EDirection.Up);
+                    currentGame.MoveBlocks(EDirection.Up);
                 }
                 break;
 
             case EInputEvent.Down:
                 if (gameplayState == EGameplayState.Gameplay)
                 {
-                    currentGame.MoveStones(EDirection.Down);
+                    currentGame.MoveBlocks(EDirection.Down);
                 }
                 break;
 
             case EInputEvent.Left:
                 if (gameplayState == EGameplayState.Gameplay)
                 {
-                    currentGame.MoveStones(EDirection.Left);
+                    currentGame.MoveBlocks(EDirection.Left);
                 }
                 break;
 
             case EInputEvent.Right:
                 if (gameplayState == EGameplayState.Gameplay)
                 {
-                    currentGame.MoveStones(EDirection.Right);
+                    currentGame.MoveBlocks(EDirection.Right);
                 }
                 break;
 
             case EInputEvent.Back:
                 if (gameplayState == EGameplayState.Gameplay)
                 {
-                    currentGame.MoveStones(EDirection.None);
+                    currentGame.MoveBlocks(EDirection.None);
                 }
                 break;
 
             case EInputEvent.Escape:
                 switch (gameplayState)
                 {
-                    case EGameplayState.Gameplay: currentGame.MoveStones(EDirection.None); break;
+                    case EGameplayState.Gameplay: currentGame.MoveBlocks(EDirection.None); break;
                     case EGameplayState.Pause: OnStartGame(); ChangeGameplayState(EGameplayState.Gameplay); break;
                     case EGameplayState.End: HandleMainMenuButtonClick(); break;
                 }
@@ -403,7 +407,7 @@ public class GameplayManager : MonoBehaviour
         ChangeGameplayState(EGameplayState.Gameplay);
     }
 
-    private void HandleStonesMatch(object sender, EventArgs args)
+    private void HandleBlocksMatch(object sender, EventArgs args)
     {
         OnWinGame();
 
@@ -448,7 +452,7 @@ public class GameplayManager : MonoBehaviour
             return;
         }
 
-        if (gameStartData.NextToLoadGame == gameStartData.GamesCount)
+        if (gameStartData.NextToLoadGame == GameStartData.GamesCount)
         {
             sceneLoader = SceneManager.LoadSceneAsync(gameStartData.SceneNames[ESceneName.Menu]);
             sceneLoader.allowSceneActivation = false;
@@ -545,5 +549,10 @@ public class GameplayManager : MonoBehaviour
     private void EnableLoadedLevel()
     {
         sceneLoader.allowSceneActivation = true;
+    }
+
+    public GameObject GetGridElementObject(int x, int y)
+    {
+        return gridBlocks[y].elements[x];
     }
 }

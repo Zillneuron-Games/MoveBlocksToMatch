@@ -26,14 +26,14 @@ public class GridElement
 
     #region Constructors
 
-    public GridElement(int x, int y)
+    public GridElement(int x, int y, IGridElementObjectProvider gridElementObjectProvider)
     {
         this.x = x;
         this.y = y;
         this.position = new Vector2(x, y);
         this.state = EGridElementState.Empty;
         this.neighborElements = new Dictionary<EGridElementNeighborSide, GridElement>();
-        this.elementObject = GameObject.FindGameObjectWithTag("grid").transform.Find(string.Format("stone_{0}x{1}", x, y)).gameObject;
+        this.elementObject = gridElementObjectProvider.GetGridElementObject(x, y);
     }
 
     #endregion Constructors

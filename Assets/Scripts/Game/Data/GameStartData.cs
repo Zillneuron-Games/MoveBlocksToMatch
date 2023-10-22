@@ -5,14 +5,16 @@ using UnityEngine;
 public class GameStartData
 {
     private const string SoundPrefsKey = "sound";
+    public const string GameDataPrefsKey = "gamedata";
+    public const int GamesCount = 105;
+    public const int MaximumStepsCount = 998;
 
     private int totalCoins;
-    private int gamesCount = 105;
-    private int maximumStepsCount = 998;
     private int nextToLoadGameId;
     private int lastGame;
     private GameData[] gamesData;
     private GameDataDynamic[] gamesDataDynamic;
+    private Dictionary<ESceneName, string> sceneNames;
 
     public bool SoundState
     {
@@ -49,16 +51,35 @@ public class GameStartData
                 nextToLoadGameId = value;
         }
     }
-    public int MaximumStepsCount => maximumStepsCount;
-    public int GamesCount => gamesCount;
     public int LastGame => lastGame;
+    public int TotalCoins => totalCoins;
+    public Dictionary<ESceneName, string> SceneNames => sceneNames;
 
-    public Dictionary<ESceneName, string> SceneNames = new Dictionary<ESceneName, string>()
+    public static GameStartData CreateInstance()
     {
-        {ESceneName.Load, "LOAD"},
-        {ESceneName.Menu, "MENU"},
-        {ESceneName.Game, "GAME"}
-    };
+        GameData[] gameData = new GameData[GamesCount];
+        GameDataDynamic[] gameDataDynamic = new GameDataDynamic[GamesCount];
+
+        for (int i = 0; i < GamesCount; i++)
+        {
+            gameData[i] = DataReader.GetGameData(i + 1);
+            gameDataDynamic[i] = DataReader.GetGameDataDynamic(i + 1);
+        }
+        return new GameStartData(gameData, gameDataDynamic);
+    }
+
+    public GameStartData(GameData[] gamesData, GameDataDynamic[] gamesDataDynamic)
+    {
+        this.totalCoins = 0;
+        this.nextToLoadGameId = 1;
+        this.lastGame = 0;
+        this.gamesData = gamesData;
+        this.gamesDataDynamic = gamesDataDynamic;
+        this.sceneNames = new Dictionary<ESceneName, string>() { {ESceneName.Load, "LOAD"},
+                                                                 {ESceneName.Menu, "MENU"},
+                                                                 {ESceneName.Game, "GAME"}
+                                                               };
+    }
 
     public void UpdateDynamicData(GameDataDynamic gameDataDynamic)
     {
@@ -69,7 +90,7 @@ public class GameStartData
 
         gamesDataDynamic[gameDataDynamic.Id - 1] = gameDataDynamic;
 
-        //DataReader.SetGameDataDynamic(gameDataDynamic);
+        DataReader.SetGameDataDynamic(gameDataDynamic);
 
         if (gameDataDynamic.Id < GamesCount)
         {
@@ -79,7 +100,7 @@ public class GameStartData
             {
                 nextGameDataDynamic.GameCount = 1;
                 lastGame = nextGameDataDynamic.Id;
-                //DataReader.SetGameDataDynamic(nextGameDataDynamic);
+                DataReader.SetGameDataDynamic(nextGameDataDynamic);
             }
         }
     }

@@ -5,7 +5,7 @@ public abstract class AGame
 {
     #region Events
 
-    public event EventHandler<EventArgs> eventStonesMatch;
+    public event EventHandler<EventArgs> eventBlocksMatch;
     public event EventHandler<EventArgs> eventFinalTransform;
     public event EventHandler<EventArgs> eventTransitOver;
     public event EventHandler<GameErrorEventArgs> eventError;
@@ -97,8 +97,6 @@ public abstract class AGame
     public AGame(GameBoardGrid gameBoardGrid, int id, int stepsBest, int coinsBest, int stepsMinimum, int playedNumber, InscriptionBlock inscriptionBlockRed, InscriptionBlock inscriptionBlockBlue,
                         TargetBlock targetBlockRed, TargetBlock targetBlockBlue, List<MobileBlock> mobileBlocks, List<StaticBlock> staticBlocks, Stack<GameplayStep> allMoves)
     {
-        GameStartData gameStartData= null;
-
         this.gameBoardGrid = gameBoardGrid;
         this.id = id;
         this.stepsCounter = 0;
@@ -108,7 +106,7 @@ public abstract class AGame
         this.playedNumber = playedNumber;
 
         this.backStepsCounter = 0;
-        this.backStepsMaximum = gameStartData.MaximumStepsCount;
+        this.backStepsMaximum = GameStartData.MaximumStepsCount;
 
         this.inscriptionBlockRed = inscriptionBlockRed;
         this.inscriptionBlockBlue = inscriptionBlockBlue;
@@ -128,7 +126,7 @@ public abstract class AGame
 
     #region Methods
 
-    public void MoveStones(EDirection direction)
+    public void MoveBlocks(EDirection direction)
     {
         switch (direction)
         {
@@ -156,7 +154,7 @@ public abstract class AGame
         CalculateCoins();
         gameDataDynamic.UpdateBestCoins(coinsCounter);
 
-        EventHandler<EventArgs> tempBlockMatchEvent = eventStonesMatch;
+        EventHandler<EventArgs> tempBlockMatchEvent = eventBlocksMatch;
 
         if (tempBlockMatchEvent != null)
         {
@@ -216,11 +214,11 @@ public abstract class AGame
 
     protected abstract void MoveBACK();
 
-    public abstract void PutStoneObjects();
+    public abstract void PutBlockObjects();
 
-    public abstract void RemoveStoneObjects();
+    public abstract void RemoveBlockObjects();
 
-    public abstract void MoveStoneObjects(float lerpAlpha, float minDistance);
+    public abstract void MoveBlockObjects(float lerpAlpha, float minDistance);
 
     protected abstract void StartStoneMatchEffects();
 

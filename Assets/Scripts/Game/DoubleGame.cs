@@ -336,7 +336,7 @@ public class DoubleGame : AGame
         inscriptionBlockBlue.StartStoneMatchEffects();
     }
 
-    public override void PutStoneObjects()
+    public override void PutBlockObjects()
     {
         List<ABlock> allBlocks = new List<ABlock>();
 
@@ -364,11 +364,11 @@ public class DoubleGame : AGame
 
         foreach (ABlock block in allBlocks)
         {
-            block.BlockPosition = new Vector3(block.CurrentElement.X, 0.0f, block.CurrentElement.Y);
+            block.BlockPosition = new Vector3(block.CurrentElement.X, block.CurrentElement.Y, 0.0f);
         }
     }
 
-    public override void RemoveStoneObjects()
+    public override void RemoveBlockObjects()
     {
         List<ABlock> allBlocks = new List<ABlock>();
 
@@ -400,9 +400,8 @@ public class DoubleGame : AGame
         }
     }
 
-    public override void MoveStoneObjects(float lerpAlpha, float minDistance)
+    public override void MoveBlockObjects(float lerpAlpha, float minDistance)
     {
-        GameStartData gameStartData = null;
         List<ABlock> allBlocks = new List<ABlock>();
 
         allBlocks.Add(inscriptionBlockRed);
@@ -418,19 +417,19 @@ public class DoubleGame : AGame
 
         foreach (ABlock block in allBlocks)
         {
-            if (Vector3.Distance(block.BlockPosition, new Vector3(block.CurrentElement.X, 0.0f, block.CurrentElement.Y)) >= minDistance)
+            if (Vector3.Distance(block.BlockPosition, new Vector3(block.CurrentElement.X, block.CurrentElement.Y, 0.0f)) >= minDistance)
             {
-                block.BlockPosition = Vector3.Lerp(block.BlockPosition, new Vector3(block.CurrentElement.X, 0.0f, block.CurrentElement.Y), lerpAlpha);
+                block.BlockPosition = Vector3.Lerp(block.BlockPosition, new Vector3(block.CurrentElement.X, block.CurrentElement.Y, 0.0f), lerpAlpha);
             }
             else
             {
-                block.BlockPosition = new Vector3(block.CurrentElement.X, 0.0f, block.CurrentElement.Y);
+                block.BlockPosition = new Vector3(block.CurrentElement.X, block.CurrentElement.Y, 0.0f);
             }
         }
 
         foreach (ABlock block in allBlocks)
         {
-            if (block.BlockPosition != new Vector3(block.CurrentElement.X, 0.0f, block.CurrentElement.Y))
+            if (block.BlockPosition != new Vector3(block.CurrentElement.X, block.CurrentElement.Y, 0.0f))
             {
                 return;
             }
@@ -448,7 +447,7 @@ public class DoubleGame : AGame
             return;
         }
 
-        if (stepsCounter > gameStartData.MaximumStepsCount)
+        if (stepsCounter > GameStartData.MaximumStepsCount)
         {
             ThrowErrorEvent(EErrorType.StepsCount);
         }
