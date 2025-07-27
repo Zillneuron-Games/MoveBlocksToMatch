@@ -1,6 +1,5 @@
-﻿using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class TripleGame : AGame
 {
@@ -41,11 +40,11 @@ public class TripleGame : AGame
             {
                 if (!block.IsInTransit)
                 {
-                    if (block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Top) != null && block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Top).State == EGridElementState.Empty)
+                    if (block.CurrentTile.GetReferencePoint(ETileNeighborSide.Top) != null && block.CurrentTile.GetReferencePoint(ETileNeighborSide.Top).State == ETileState.Empty)
                     {
-                        block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Top).SetFull();
-                        block.CurrentElement.SetEmpty();
-                        block.ChangePoint(block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Top));
+                        block.CurrentTile.GetReferencePoint(ETileNeighborSide.Top).SetFull();
+                        block.CurrentTile.SetEmpty();
+                        block.ChangePoint(block.CurrentTile.GetReferencePoint(ETileNeighborSide.Top));
                         block.TransitTransform();
 
                         if (!isNewStepDone)
@@ -75,7 +74,7 @@ public class TripleGame : AGame
             {
                 block.FinalTransform();
 
-                allBlocksPositions.Add(block.Id, block.CurrentElement.Position);
+                allBlocksPositions.Add(block.Id, block.CurrentTile.AnchoredPosition);
             }
 
             GameplayStep nextStep = new GameplayStep(allMoves.Count, EDirection.Up, allBlocksPositions);
@@ -111,11 +110,11 @@ public class TripleGame : AGame
             {
                 if (!block.IsInTransit)
                 {
-                    if (block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Bottom) != null && block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Bottom).State == EGridElementState.Empty)
+                    if (block.CurrentTile.GetReferencePoint(ETileNeighborSide.Bottom) != null && block.CurrentTile.GetReferencePoint(ETileNeighborSide.Bottom).State == ETileState.Empty)
                     {
-                        block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Bottom).SetFull();
-                        block.CurrentElement.SetEmpty();
-                        block.ChangePoint(block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Bottom));
+                        block.CurrentTile.GetReferencePoint(ETileNeighborSide.Bottom).SetFull();
+                        block.CurrentTile.SetEmpty();
+                        block.ChangePoint(block.CurrentTile.GetReferencePoint(ETileNeighborSide.Bottom));
                         block.TransitTransform();
 
                         if (!isNewStepDone)
@@ -145,7 +144,7 @@ public class TripleGame : AGame
             {
                 block.FinalTransform();
 
-                allBlockPositions.Add(block.Id, block.CurrentElement.Position);
+                allBlockPositions.Add(block.Id, block.CurrentTile.AnchoredPosition);
             }
 
             GameplayStep nextStep = new GameplayStep(allMoves.Count, EDirection.Down, allBlockPositions);
@@ -181,11 +180,11 @@ public class TripleGame : AGame
             {
                 if (!block.IsInTransit)
                 {
-                    if (block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Left) != null && block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Left).State == EGridElementState.Empty)
+                    if (block.CurrentTile.GetReferencePoint(ETileNeighborSide.Left) != null && block.CurrentTile.GetReferencePoint(ETileNeighborSide.Left).State == ETileState.Empty)
                     {
-                        block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Left).SetFull();
-                        block.CurrentElement.SetEmpty();
-                        block.ChangePoint(block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Left));
+                        block.CurrentTile.GetReferencePoint(ETileNeighborSide.Left).SetFull();
+                        block.CurrentTile.SetEmpty();
+                        block.ChangePoint(block.CurrentTile.GetReferencePoint(ETileNeighborSide.Left));
                         block.TransitTransform();
 
                         if (!isNewStepDone)
@@ -215,7 +214,7 @@ public class TripleGame : AGame
             {
                 block.FinalTransform();
 
-                allBlocksPositions.Add(block.Id, block.CurrentElement.Position);
+                allBlocksPositions.Add(block.Id, block.CurrentTile.AnchoredPosition);
             }
 
             GameplayStep nextStep = new GameplayStep(allMoves.Count, EDirection.Left, allBlocksPositions);
@@ -251,11 +250,11 @@ public class TripleGame : AGame
             {
                 if (!block.IsInTransit)
                 {
-                    if (block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Right) != null && block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Right).State == EGridElementState.Empty)
+                    if (block.CurrentTile.GetReferencePoint(ETileNeighborSide.Right) != null && block.CurrentTile.GetReferencePoint(ETileNeighborSide.Right).State == ETileState.Empty)
                     {
-                        block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Right).SetFull();
-                        block.CurrentElement.SetEmpty();
-                        block.ChangePoint(block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Right));
+                        block.CurrentTile.GetReferencePoint(ETileNeighborSide.Right).SetFull();
+                        block.CurrentTile.SetEmpty();
+                        block.ChangePoint(block.CurrentTile.GetReferencePoint(ETileNeighborSide.Right));
                         block.TransitTransform();
 
                         if (!isNewStepDone)
@@ -285,7 +284,7 @@ public class TripleGame : AGame
             {
                 block.FinalTransform();
 
-                allBlocksPositions.Add(block.Id, block.CurrentElement.Position);
+                allBlocksPositions.Add(block.Id, block.CurrentTile.AnchoredPosition);
             }
 
             GameplayStep nextStep = new GameplayStep(allMoves.Count, EDirection.Right, allBlocksPositions);
@@ -330,12 +329,12 @@ public class TripleGame : AGame
 
             foreach (ABlock block in allMovableBlocks)
             {
-                block.CurrentElement.SetEmpty();
+                block.CurrentTile.SetEmpty();
 
                 Vector2 blockPosition = prevStep.GetPositionById(block.Id);
 
                 block.ChangePoint(gameBoardGrid[(int)blockPosition.x, (int)blockPosition.y]);
-                block.CurrentElement.SetFull();
+                block.CurrentTile.SetFull();
             }
         }
 
@@ -380,7 +379,8 @@ public class TripleGame : AGame
 
         foreach (ABlock block in allBlocks)
         {
-            block.BlockPosition = new Vector3(block.CurrentElement.X, block.CurrentElement.Y, 0.0f);
+            block.AnchoredPosition = block.CurrentTile.AnchoredPosition;
+            block.Show();
         }
     }
 
@@ -414,7 +414,7 @@ public class TripleGame : AGame
 
         foreach (ABlock block in allBlocks)
         {
-            block.BlockPosition = new Vector3(200, 200, 200);
+            block.Hide();
         }
     }
 
@@ -436,20 +436,20 @@ public class TripleGame : AGame
 
         foreach (ABlock block in allBlocks)
         {
-            if (Vector3.Distance(block.BlockPosition, new Vector3(block.CurrentElement.X, block.CurrentElement.Y, 0.0f)) >= minDistance)
+            if (Vector3.Distance(block.AnchoredPosition, block.CurrentTile.AnchoredPosition) >= minDistance)
             {
-                block.BlockPosition = Vector3.Lerp(block.BlockPosition, new Vector3(block.CurrentElement.X, block.CurrentElement.Y, 0.0f), lerpAlpha);
+                block.AnchoredPosition = Vector3.Lerp(block.AnchoredPosition, block.CurrentTile.AnchoredPosition, lerpAlpha);
             }
             else
             {
-                block.BlockPosition = new Vector3(block.CurrentElement.X, block.CurrentElement.Y, 0.0f);
+                block.AnchoredPosition = block.CurrentTile.AnchoredPosition;
             }
         }
 
 
         foreach (ABlock block in allBlocks)
         {
-            if (block.BlockPosition != new Vector3(block.CurrentElement.X, block.CurrentElement.Y, 0.0f))
+            if (block.AnchoredPosition != block.CurrentTile.AnchoredPosition)
             {
                 return;
             }
@@ -457,7 +457,7 @@ public class TripleGame : AGame
 
         ThrowTransitOverEvent();
 
-        if (inscriptionBlockRed.CurrentElement == targetBlockRed.CurrentElement && inscriptionBlockBlue.CurrentElement == targetBlockBlue.CurrentElement && inscriptionBlockYellow.CurrentElement == targetBlockYellow.CurrentElement)
+        if (inscriptionBlockRed.CurrentTile == targetBlockRed.CurrentTile && inscriptionBlockBlue.CurrentTile == targetBlockBlue.CurrentTile && inscriptionBlockYellow.CurrentTile == targetBlockYellow.CurrentTile)
         {
             SoundManager.Instance.PlayStoneStop();
             StartStoneMatchEffects();
@@ -469,5 +469,44 @@ public class TripleGame : AGame
         {
             ThrowErrorEvent(EErrorType.StepsCount);
         }
+    }
+
+    public override Board GetBoardState()
+    {
+        int coloredPawnsCount = 3;
+        bool hasMobileBlocks = mobileBlocks != null;
+        bool hasStaticBlocks = staticBlocks != null;
+        int mobileBlocksCount = hasMobileBlocks ? mobileBlocks.Count : 0;
+        int staticBlocksCount = hasStaticBlocks ? staticBlocks.Count : 0;
+
+        Piece[] targets = new Piece[coloredPawnsCount];
+        targets[0] = new Piece(targetBlockRed.CurrentTile.Position, EPawnColor.Red);
+        targets[1] = new Piece(targetBlockBlue.CurrentTile.Position, EPawnColor.Blue);
+        targets[2] = new Piece(targetBlockYellow.CurrentTile.Position, EPawnColor.Green);
+
+        Pawn[] pawns = new Pawn[coloredPawnsCount + mobileBlocks.Count + staticBlocks.Count];
+        pawns[0] = new Pawn(inscriptionBlockRed.CurrentTile.Position, EPawnColor.Red);
+        pawns[1] = new Pawn(inscriptionBlockBlue.CurrentTile.Position, EPawnColor.Blue);
+        pawns[2] = new Pawn(inscriptionBlockYellow.CurrentTile.Position, EPawnColor.Green);
+
+        if (hasMobileBlocks)
+        {
+            for (int i = coloredPawnsCount; i < mobileBlocksCount + coloredPawnsCount; i++)
+            {
+                pawns[i] = new Pawn(mobileBlocks[i].CurrentTile.Position, EPawnColor.Grey);
+            }
+        }
+
+        Block[] blocks = new Block[staticBlocksCount];
+
+        if (hasStaticBlocks)
+        {
+            for (int i = 0; i < staticBlocksCount; i++)
+            {
+                blocks[i] = new Block(staticBlocks[i].CurrentTile.Position);
+            }
+        }
+
+        return new Board(gameBoardGrid.Width, gameBoardGrid.Height, pawns, blocks, targets);
     }
 }

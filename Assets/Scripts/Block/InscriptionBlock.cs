@@ -3,17 +3,17 @@ using UnityEngine;
 
 public class InscriptionBlock : ABlock
 {
-    public InscriptionBlock(int id, GameObject blockObject, GridElement gridElement) : base(id, blockObject, gridElement)
+    public InscriptionBlock(int id, GameObject blockObject, Tile tile) : base(id, blockObject, tile)
     {
         isMovable = true;
-        gridElement.SetFull();
+        tile.SetFull();
 
         SetActive(true);
     }
 
-    public override void ChangePoint(GridElement newElement)
+    public override void ChangePoint(Tile nextTile)
     {
-        gridElement = newElement;
+        tile = nextTile;
     }
 
     public override void TransitTransform()

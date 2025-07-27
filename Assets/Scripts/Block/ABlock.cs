@@ -8,8 +8,9 @@ public abstract class ABlock
     protected int id;
     protected bool isMovable;
     protected bool isInTransit;
+    protected RectTransform rectTransform;
     protected GameObject blockObject;
-    protected GridElement gridElement;
+    protected Tile tile;
 
     #endregion Variables
 
@@ -25,31 +26,41 @@ public abstract class ABlock
         get { return isInTransit; }
     }
 
-    public GridElement CurrentElement
+    public Tile CurrentTile
     {
-        get { return gridElement; }
+        get { return tile; }
     }
 
-    public Vector3 BlockPosition
+    public Vector3 AnchoredPosition
     {
-        get { return blockObject.transform.position; }
-        set { blockObject.transform.position = value; }
+        get { return rectTransform.anchoredPosition; }
+        set { rectTransform.anchoredPosition = value; }
     }
 
     #endregion Properties
 
-    public ABlock(int id, GameObject blockObject, GridElement gridElement)
+    public ABlock(int id, GameObject blockObject, Tile tile)
     {
         this.id = id;
         this.blockObject = blockObject;
-        this.gridElement = gridElement;
+        this.tile = tile;
+        this.rectTransform = blockObject.GetComponent<RectTransform>();
         this.isInTransit = false;
     }
 
+    public void Show()
+    {
+        blockObject.SetActive(true);
+    }
+
+    public void Hide()
+    {
+        blockObject.SetActive(true);
+    }
 
     #region Methods
 
-    public abstract void ChangePoint(GridElement newElement);
+    public abstract void ChangePoint(Tile nextTile);
 
     public abstract void TransitTransform();
 

@@ -3,12 +3,12 @@ using UnityEngine;
 
 public class TargetBlock : ABlock
 {
-    public TargetBlock(int id, GameObject blockObject, GridElement gridElement) : base(id, blockObject, gridElement)
+    public TargetBlock(int id, GameObject blockObject, Tile tile) : base(id, blockObject, tile)
     {
         isMovable = false;
     }
 
-    public override void ChangePoint(GridElement newElement)
+    public override void ChangePoint(Tile nextTile)
     {
 
     }

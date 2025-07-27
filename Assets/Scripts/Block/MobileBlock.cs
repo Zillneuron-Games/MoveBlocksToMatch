@@ -3,15 +3,15 @@ using UnityEngine;
 
 public class MobileBlock : ABlock
 {
-    public MobileBlock(int id, GameObject blockObject, GridElement gridElement) : base(id, blockObject, gridElement)
+    public MobileBlock(int id, GameObject blockObject, Tile tile) : base(id, blockObject, tile)
     {
         isMovable = true;
-        gridElement.SetFull();
+        tile.SetFull();
     }
 
-    public override void ChangePoint(GridElement newElement)
+    public override void ChangePoint(Tile nextTile)
     {
-        gridElement = newElement;
+        tile = nextTile;
     }
 
     public override void TransitTransform()

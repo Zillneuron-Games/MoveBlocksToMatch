@@ -1,10 +1,11 @@
-using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.SceneManagement;
+using Zillneuron.UILayout;
 
-public class GameplayManager : MonoBehaviour, IGridElementObjectProvider
+public class GameplayManager : MonoBehaviour, ITileObjectProvider
 {
     #region Events
 
@@ -57,6 +58,7 @@ public class GameplayManager : MonoBehaviour, IGridElementObjectProvider
 
     private void Start()
     {
+        ViewContext.Instance.Construct();
         sceneLoader = null;
 
         StartCoroutine(LoadScene());
@@ -113,6 +115,8 @@ public class GameplayManager : MonoBehaviour, IGridElementObjectProvider
             DestroyGame();
             gameBoardGrid.Clear();
         }
+
+        HideAllElements();
 
         GameData gameData = gameStartData.GetGameData(gameId);
 
@@ -551,8 +555,60 @@ public class GameplayManager : MonoBehaviour, IGridElementObjectProvider
         sceneLoader.allowSceneActivation = true;
     }
 
-    public GameObject GetGridElementObject(int x, int y)
+    public GameObject GetTileObject(int x, int y)
     {
         return gridBlocks[y].elements[x];
+    }
+
+    private void HideAllElements()
+    {
+        inscriptionRed.SetActive(false);
+        inscriptionBlue.SetActive(false);
+        inscriptionYellow.SetActive(false);
+        inscriptionGreen.SetActive(false);
+
+        targetRed.SetActive(false);
+        targetBlue.SetActive(false);
+        targetYellow.SetActive(false);
+        targetGreen.SetActive(false);
+
+        for (int i = 0; i < mobileBlocks.Length; i++)
+        {
+            mobileBlocks[i].SetActive(false);
+        }
+
+        for (int i = 0; i < staticBlocks.Length; i++)
+        {
+            staticBlocks[i].SetActive(false);
+        }        
+    }
+
+    public EDirection GetHint()
+    {
+        if(currentGame != null)
+        {
+            Board board = currentGame.GetBoardState();
+            Hint hintManager = new Hint(board);
+            Vector2Int direction = hintManager.GetAStarHint();
+
+            if (direction == Direction2D.Up)
+            {
+                return EDirection.Up;
+            }
+            else if (direction == Direction2D.Down)
+            {
+                return EDirection.Down;
+            }
+            else if (direction == Direction2D.Left)
+            {
+                return EDirection.Left;
+            }
+            else if (direction == Direction2D.Right)
+            {
+                return EDirection.Right;
+            }
+        }
+
+        return EDirection.None;
     }
 }

@@ -1,11 +1,14 @@
 {
   "dependencies": {
+    "com.unity.2d.sprite": "1.0.0",
     "com.unity.collab-proxy": "2.2.0",
     "com.unity.feature.development": "1.0.1",
     "com.unity.textmeshpro": "3.0.6",
     "com.unity.timeline": "1.7.6",
     "com.unity.ugui": "1.0.0",
     "com.unity.visualscripting": "1.9.1",
+    "com.zillneuron.uilayout": "https://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@github.com/Zillneuron-Packages/UILayout.git",
+    "com.zillneuron.utilities": "https://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@github.com/Zillneuron-Packages/Utilities.git",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
     "com.unity.modules.animation": "1.0.0",

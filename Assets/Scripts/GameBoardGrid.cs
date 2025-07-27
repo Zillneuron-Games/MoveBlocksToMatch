@@ -5,20 +5,22 @@ public class GameBoardGrid
 {
     #region Variables
 
-    private int gridLength;
-    private int gridHight;
-    private IGridElementObjectProvider gridElementObjectProvider;
-    private GridElement rootElement;
+    private int width;
+    private int height;
+    private ITileObjectProvider tileObjectProvider;
+    private Tile rootTile;
 
     #endregion Variables
 
     #region Properties
 
-    public GridElement this[int i, int j]
+    public int Width => width;
+    public int Height => height;
+    public Tile this[int i, int j]
     {
         get
         {
-            if (i >= 0 && i < gridLength && j >= 0 && j < gridHight)
+            if (i >= 0 && i < width && j >= 0 && j < height)
             {
                 return ForEachPoint(i, j, GetPointByIndex);
             }
@@ -33,86 +35,86 @@ public class GameBoardGrid
 
     #region Constructors
 
-    public GameBoardGrid(int gridLength, int gridHight, IGridElementObjectProvider gridElementObjectProvider)
+    public GameBoardGrid(int width, int height, ITileObjectProvider tileObjectProvider)
     {
-        this.gridLength = gridLength;
-        this.gridHight = gridHight;
-        this.gridElementObjectProvider = gridElementObjectProvider;
-        this.rootElement = new GridElement(0, 0, gridElementObjectProvider);
+        this.width = width;
+        this.height = height;
+        this.tileObjectProvider = tileObjectProvider;
+        this.rootTile = new Tile(0, 0, tileObjectProvider);
 
-        List<GridElement> frontElements = new List<GridElement>();
+        List<Tile> frontTiles = new List<Tile>();
 
-        frontElements.Add(rootElement);
+        frontTiles.Add(rootTile);
 
-        CreateReferencePoints(frontElements);
+        CreateReferencePoints(frontTiles);
     }
 
     #endregion Constructors
 
     #region Methods
 
-    private void CreateReferencePoints(List<GridElement> frontElements)
+    private void CreateReferencePoints(List<Tile> frontTiles)
     {
-        List<GridElement> currentElements = frontElements;
+        List<Tile> currentTiless = frontTiles;
 
-        while (currentElements.Count > 0)
+        while (currentTiless.Count > 0)
         {
-            List<GridElement> nextElement = new List<GridElement>();
+            List<Tile> nextTiles = new List<Tile>();
 
-            foreach (GridElement rootElement in currentElements)
+            foreach (Tile rootTile in currentTiless)
             {
                 #region Bottom, Left, Top, Right
 
-                if (rootElement.GetReferencePoint(EGridElementNeighborSide.Bottom) == null)
+                if (rootTile.GetReferencePoint(ETileNeighborSide.Bottom) == null)
                 {
-                    if (rootElement.Y - 1 >= 0)
+                    if (rootTile.Position.y - 1 >= 0)
                     {
-                        GridElement temp_point = new GridElement(rootElement.X, rootElement.Y - 1, gridElementObjectProvider);
+                        Tile temp_point = new Tile(rootTile.Position.x, rootTile.Position.y - 1, tileObjectProvider);
 
-                        rootElement.AddReferencePoint(EGridElementNeighborSide.Bottom, temp_point);
-                        rootElement.GetReferencePoint(EGridElementNeighborSide.Bottom).AddReferencePoint(EGridElementNeighborSide.Top, rootElement);
+                        rootTile.AddReferencePoint(ETileNeighborSide.Bottom, temp_point);
+                        rootTile.GetReferencePoint(ETileNeighborSide.Bottom).AddReferencePoint(ETileNeighborSide.Top, rootTile);
 
-                        nextElement.Add(temp_point);
+                        nextTiles.Add(temp_point);
                     }
                 }
 
-                if (rootElement.GetReferencePoint(EGridElementNeighborSide.Top) == null)
+                if (rootTile.GetReferencePoint(ETileNeighborSide.Top) == null)
                 {
-                    if (rootElement.Y + 1 < gridHight)
+                    if (rootTile.Position.y + 1 < height)
                     {
 
-                        GridElement temp_point = new GridElement(rootElement.X, rootElement.Y + 1, gridElementObjectProvider);
+                        Tile temp_point = new Tile(rootTile.Position.x, rootTile.Position.y + 1, tileObjectProvider);
 
-                        rootElement.AddReferencePoint(EGridElementNeighborSide.Top, temp_point);
-                        rootElement.GetReferencePoint(EGridElementNeighborSide.Top).AddReferencePoint(EGridElementNeighborSide.Bottom, rootElement);
+                        rootTile.AddReferencePoint(ETileNeighborSide.Top, temp_point);
+                        rootTile.GetReferencePoint(ETileNeighborSide.Top).AddReferencePoint(ETileNeighborSide.Bottom, rootTile);
 
-                        nextElement.Add(temp_point);
+                        nextTiles.Add(temp_point);
                     }
                 }
 
-                if (rootElement.GetReferencePoint(EGridElementNeighborSide.Left) == null)
+                if (rootTile.GetReferencePoint(ETileNeighborSide.Left) == null)
                 {
-                    if (rootElement.X - 1 >= 0)
+                    if (rootTile.Position.x - 1 >= 0)
                     {
-                        GridElement temp_point = new GridElement(rootElement.X - 1, rootElement.Y, gridElementObjectProvider);
+                        Tile temp_point = new Tile(rootTile.Position.x - 1, rootTile.Position.y, tileObjectProvider);
 
-                        rootElement.AddReferencePoint(EGridElementNeighborSide.Left, temp_point);
-                        rootElement.GetReferencePoint(EGridElementNeighborSide.Left).AddReferencePoint(EGridElementNeighborSide.Right, rootElement);
+                        rootTile.AddReferencePoint(ETileNeighborSide.Left, temp_point);
+                        rootTile.GetReferencePoint(ETileNeighborSide.Left).AddReferencePoint(ETileNeighborSide.Right, rootTile);
 
-                        nextElement.Add(temp_point);
+                        nextTiles.Add(temp_point);
                     }
                 }
 
-                if (rootElement.GetReferencePoint(EGridElementNeighborSide.Right) == null)
+                if (rootTile.GetReferencePoint(ETileNeighborSide.Right) == null)
                 {
-                    if (rootElement.X + 1 < gridLength)
+                    if (rootTile.Position.x + 1 < width)
                     {
-                        GridElement temp_point = new GridElement(rootElement.X + 1, rootElement.Y, gridElementObjectProvider);
+                        Tile temp_point = new Tile(rootTile.Position.x + 1, rootTile.Position.y, tileObjectProvider);
 
-                        rootElement.AddReferencePoint(EGridElementNeighborSide.Right, temp_point);
-                        rootElement.GetReferencePoint(EGridElementNeighborSide.Right).AddReferencePoint(EGridElementNeighborSide.Left, rootElement);
+                        rootTile.AddReferencePoint(ETileNeighborSide.Right, temp_point);
+                        rootTile.GetReferencePoint(ETileNeighborSide.Right).AddReferencePoint(ETileNeighborSide.Left, rootTile);
 
-                        nextElement.Add(temp_point);
+                        nextTiles.Add(temp_point);
                     }
                 }
 
@@ -120,19 +122,19 @@ public class GameBoardGrid
 
                 #region Bottom -> <- Left
 
-                if (rootElement.GetReferencePoint(EGridElementNeighborSide.Bottom) != null && rootElement.GetReferencePoint(EGridElementNeighborSide.Left) != null)
+                if (rootTile.GetReferencePoint(ETileNeighborSide.Bottom) != null && rootTile.GetReferencePoint(ETileNeighborSide.Left) != null)
                 {
-                    if (rootElement.GetReferencePoint(EGridElementNeighborSide.Bottom).GetReferencePoint(EGridElementNeighborSide.Left) == null && rootElement.GetReferencePoint(EGridElementNeighborSide.Left).GetReferencePoint(EGridElementNeighborSide.Bottom) == null)
+                    if (rootTile.GetReferencePoint(ETileNeighborSide.Bottom).GetReferencePoint(ETileNeighborSide.Left) == null && rootTile.GetReferencePoint(ETileNeighborSide.Left).GetReferencePoint(ETileNeighborSide.Bottom) == null)
                     {
-                        GridElement tempElement = new GridElement(rootElement.X - 1, rootElement.Y - 1, gridElementObjectProvider);
+                        Tile tempTile = new Tile(rootTile.Position.x - 1, rootTile.Position.y - 1, tileObjectProvider);
 
-                        rootElement.GetReferencePoint(EGridElementNeighborSide.Bottom).AddReferencePoint(EGridElementNeighborSide.Left, tempElement);
-                        rootElement.GetReferencePoint(EGridElementNeighborSide.Left).AddReferencePoint(EGridElementNeighborSide.Bottom, tempElement);
+                        rootTile.GetReferencePoint(ETileNeighborSide.Bottom).AddReferencePoint(ETileNeighborSide.Left, tempTile);
+                        rootTile.GetReferencePoint(ETileNeighborSide.Left).AddReferencePoint(ETileNeighborSide.Bottom, tempTile);
 
-                        tempElement.AddReferencePoint(EGridElementNeighborSide.Right, rootElement.GetReferencePoint(EGridElementNeighborSide.Bottom));
-                        tempElement.AddReferencePoint(EGridElementNeighborSide.Top, rootElement.GetReferencePoint(EGridElementNeighborSide.Left));
+                        tempTile.AddReferencePoint(ETileNeighborSide.Right, rootTile.GetReferencePoint(ETileNeighborSide.Bottom));
+                        tempTile.AddReferencePoint(ETileNeighborSide.Top, rootTile.GetReferencePoint(ETileNeighborSide.Left));
 
-                        nextElement.Add(tempElement);
+                        nextTiles.Add(tempTile);
                     }
                 }
 
@@ -140,19 +142,19 @@ public class GameBoardGrid
 
                 #region Left -> <- Top
 
-                if (rootElement.GetReferencePoint(EGridElementNeighborSide.Left) != null && rootElement.GetReferencePoint(EGridElementNeighborSide.Top) != null)
+                if (rootTile.GetReferencePoint(ETileNeighborSide.Left) != null && rootTile.GetReferencePoint(ETileNeighborSide.Top) != null)
                 {
-                    if (rootElement.GetReferencePoint(EGridElementNeighborSide.Left).GetReferencePoint(EGridElementNeighborSide.Top) == null && rootElement.GetReferencePoint(EGridElementNeighborSide.Top).GetReferencePoint(EGridElementNeighborSide.Left) == null)
+                    if (rootTile.GetReferencePoint(ETileNeighborSide.Left).GetReferencePoint(ETileNeighborSide.Top) == null && rootTile.GetReferencePoint(ETileNeighborSide.Top).GetReferencePoint(ETileNeighborSide.Left) == null)
                     {
-                        GridElement tempElement = new GridElement(rootElement.X - 1, rootElement.Y + 1, gridElementObjectProvider);
+                        Tile tempTile = new Tile(rootTile.Position.x - 1, rootTile.Position.y + 1, tileObjectProvider);
 
-                        rootElement.GetReferencePoint(EGridElementNeighborSide.Left).AddReferencePoint(EGridElementNeighborSide.Top, tempElement);
-                        rootElement.GetReferencePoint(EGridElementNeighborSide.Top).AddReferencePoint(EGridElementNeighborSide.Left, tempElement);
+                        rootTile.GetReferencePoint(ETileNeighborSide.Left).AddReferencePoint(ETileNeighborSide.Top, tempTile);
+                        rootTile.GetReferencePoint(ETileNeighborSide.Top).AddReferencePoint(ETileNeighborSide.Left, tempTile);
 
-                        tempElement.AddReferencePoint(EGridElementNeighborSide.Bottom, rootElement.GetReferencePoint(EGridElementNeighborSide.Left));
-                        tempElement.AddReferencePoint(EGridElementNeighborSide.Right, rootElement.GetReferencePoint(EGridElementNeighborSide.Top));
+                        tempTile.AddReferencePoint(ETileNeighborSide.Bottom, rootTile.GetReferencePoint(ETileNeighborSide.Left));
+                        tempTile.AddReferencePoint(ETileNeighborSide.Right, rootTile.GetReferencePoint(ETileNeighborSide.Top));
 
-                        nextElement.Add(tempElement);
+                        nextTiles.Add(tempTile);
                     }
                 }
 
@@ -162,19 +164,19 @@ public class GameBoardGrid
                 #region Top -> <- Right
 
 
-                if (rootElement.GetReferencePoint(EGridElementNeighborSide.Top) != null && rootElement.GetReferencePoint(EGridElementNeighborSide.Right) != null)
+                if (rootTile.GetReferencePoint(ETileNeighborSide.Top) != null && rootTile.GetReferencePoint(ETileNeighborSide.Right) != null)
                 {
-                    if (rootElement.GetReferencePoint(EGridElementNeighborSide.Top).GetReferencePoint(EGridElementNeighborSide.Right) == null && rootElement.GetReferencePoint(EGridElementNeighborSide.Right).GetReferencePoint(EGridElementNeighborSide.Top) == null)
+                    if (rootTile.GetReferencePoint(ETileNeighborSide.Top).GetReferencePoint(ETileNeighborSide.Right) == null && rootTile.GetReferencePoint(ETileNeighborSide.Right).GetReferencePoint(ETileNeighborSide.Top) == null)
                     {
-                        GridElement tempElement = new GridElement(rootElement.X + 1, rootElement.Y + 1, gridElementObjectProvider);
+                        Tile tempTile = new Tile(rootTile.Position.x + 1, rootTile.Position.y + 1, tileObjectProvider);
 
-                        rootElement.GetReferencePoint(EGridElementNeighborSide.Top).AddReferencePoint(EGridElementNeighborSide.Right, tempElement);
-                        rootElement.GetReferencePoint(EGridElementNeighborSide.Right).AddReferencePoint(EGridElementNeighborSide.Top, tempElement);
+                        rootTile.GetReferencePoint(ETileNeighborSide.Top).AddReferencePoint(ETileNeighborSide.Right, tempTile);
+                        rootTile.GetReferencePoint(ETileNeighborSide.Right).AddReferencePoint(ETileNeighborSide.Top, tempTile);
 
-                        tempElement.AddReferencePoint(EGridElementNeighborSide.Left, rootElement.GetReferencePoint(EGridElementNeighborSide.Top));
-                        tempElement.AddReferencePoint(EGridElementNeighborSide.Bottom, rootElement.GetReferencePoint(EGridElementNeighborSide.Right));
+                        tempTile.AddReferencePoint(ETileNeighborSide.Left, rootTile.GetReferencePoint(ETileNeighborSide.Top));
+                        tempTile.AddReferencePoint(ETileNeighborSide.Bottom, rootTile.GetReferencePoint(ETileNeighborSide.Right));
 
-                        nextElement.Add(tempElement);
+                        nextTiles.Add(tempTile);
                     }
                 }
 
@@ -183,19 +185,19 @@ public class GameBoardGrid
 
                 #region Right -> <- Bottom
 
-                if (rootElement.GetReferencePoint(EGridElementNeighborSide.Right) != null && rootElement.GetReferencePoint(EGridElementNeighborSide.Bottom) != null)
+                if (rootTile.GetReferencePoint(ETileNeighborSide.Right) != null && rootTile.GetReferencePoint(ETileNeighborSide.Bottom) != null)
                 {
-                    if (rootElement.GetReferencePoint(EGridElementNeighborSide.Right).GetReferencePoint(EGridElementNeighborSide.Bottom) == null && rootElement.GetReferencePoint(EGridElementNeighborSide.Bottom).GetReferencePoint(EGridElementNeighborSide.Right) == null)
+                    if (rootTile.GetReferencePoint(ETileNeighborSide.Right).GetReferencePoint(ETileNeighborSide.Bottom) == null && rootTile.GetReferencePoint(ETileNeighborSide.Bottom).GetReferencePoint(ETileNeighborSide.Right) == null)
                     {
-                        GridElement tempElement = new GridElement(rootElement.X + 1, rootElement.Y - 1, gridElementObjectProvider);
+                        Tile tempTile = new Tile(rootTile.Position.x + 1, rootTile.Position.y - 1, tileObjectProvider);
 
-                        rootElement.GetReferencePoint(EGridElementNeighborSide.Right).AddReferencePoint(EGridElementNeighborSide.Bottom, tempElement);
-                        rootElement.GetReferencePoint(EGridElementNeighborSide.Bottom).AddReferencePoint(EGridElementNeighborSide.Right, tempElement);
+                        rootTile.GetReferencePoint(ETileNeighborSide.Right).AddReferencePoint(ETileNeighborSide.Bottom, tempTile);
+                        rootTile.GetReferencePoint(ETileNeighborSide.Bottom).AddReferencePoint(ETileNeighborSide.Right, tempTile);
 
-                        tempElement.AddReferencePoint(EGridElementNeighborSide.Top, rootElement.GetReferencePoint(EGridElementNeighborSide.Right));
-                        tempElement.AddReferencePoint(EGridElementNeighborSide.Left, rootElement.GetReferencePoint(EGridElementNeighborSide.Bottom));
+                        tempTile.AddReferencePoint(ETileNeighborSide.Top, rootTile.GetReferencePoint(ETileNeighborSide.Right));
+                        tempTile.AddReferencePoint(ETileNeighborSide.Left, rootTile.GetReferencePoint(ETileNeighborSide.Bottom));
 
-                        nextElement.Add(tempElement);
+                        nextTiles.Add(tempTile);
                     }
                 }
 
@@ -203,7 +205,7 @@ public class GameBoardGrid
 
             }
 
-            currentElements = nextElement;
+            currentTiless = nextTiles;
         }
 
     }
@@ -215,98 +217,98 @@ public class GameBoardGrid
 
     #region Apply For Each Eelemnt
 
-    private GridElement ForEachPoint(int x, int y, Func<GridElement, int, int, GridElement> handler)
+    private Tile ForEachPoint(int x, int y, Func<Tile, int, int, Tile> handler)
     {
-        return ApplyForEachPoint(rootElement, x, y, handler);
+        return ApplyForEachPoint(rootTile, x, y, handler);
     }
 
-    private bool ForEachPoint(Func<GridElement, bool> handler)
+    private bool ForEachPoint(Func<Tile, bool> handler)
     {
-        return ApplyForEachPoint(rootElement, handler);
+        return ApplyForEachPoint(rootTile, handler);
     }
 
-    private GridElement ApplyForEachPoint(GridElement currentElement, int x, int y, Func<GridElement, int, int, GridElement> handler)
+    private Tile ApplyForEachPoint(Tile currentTile, int x, int y, Func<Tile, int, int, Tile> handler)
     {
-        if (currentElement == null)
+        if (currentTile == null)
         {
             return null;
         }
 
-        GridElement topElement = currentElement.GetReferencePoint(EGridElementNeighborSide.Top);
-        GridElement rightElement = currentElement.GetReferencePoint(EGridElementNeighborSide.Right);
-        GridElement nextElement = (currentElement.GetReferencePoint(EGridElementNeighborSide.Top) == null) ? null : currentElement.GetReferencePoint(EGridElementNeighborSide.Top).GetReferencePoint(EGridElementNeighborSide.Right);
+        Tile topTile = currentTile.GetReferencePoint(ETileNeighborSide.Top);
+        Tile rightTile = currentTile.GetReferencePoint(ETileNeighborSide.Right);
+        Tile nextTile = (currentTile.GetReferencePoint(ETileNeighborSide.Top) == null) ? null : currentTile.GetReferencePoint(ETileNeighborSide.Top).GetReferencePoint(ETileNeighborSide.Right);
 
-        if (handler(currentElement, x, y) != null)
+        if (handler(currentTile, x, y) != null)
         {
-            return handler(currentElement, x, y);
+            return handler(currentTile, x, y);
         }
 
-        while (topElement != null)
+        while (topTile != null)
         {
-            if (handler(topElement, x, y) != null)
+            if (handler(topTile, x, y) != null)
             {
-                return handler(topElement, x, y);
+                return handler(topTile, x, y);
             }
 
-            topElement = topElement.GetReferencePoint(EGridElementNeighborSide.Top);
+            topTile = topTile.GetReferencePoint(ETileNeighborSide.Top);
         }
 
-        while (rightElement != null)
+        while (rightTile != null)
         {
-            if (handler(rightElement, x, y) != null)
+            if (handler(rightTile, x, y) != null)
             {
-                return handler(rightElement, x, y);
+                return handler(rightTile, x, y);
             }
 
-            rightElement = rightElement.GetReferencePoint(EGridElementNeighborSide.Right);
+            rightTile = rightTile.GetReferencePoint(ETileNeighborSide.Right);
         }
 
-        return ApplyForEachPoint(nextElement, x, y, handler);
+        return ApplyForEachPoint(nextTile, x, y, handler);
     }
 
-    private bool ApplyForEachPoint(GridElement currentElement, Func<GridElement, bool> handler)
+    private bool ApplyForEachPoint(Tile currentTile, Func<Tile, bool> handler)
     {
-        if (currentElement == null)
+        if (currentTile == null)
         {
             return true;
         }
 
-        GridElement topElement = currentElement.GetReferencePoint(EGridElementNeighborSide.Top);
-        GridElement rightElement = currentElement.GetReferencePoint(EGridElementNeighborSide.Right);
-        GridElement nextElement = (currentElement.GetReferencePoint(EGridElementNeighborSide.Top) == null) ? null : currentElement.GetReferencePoint(EGridElementNeighborSide.Top).GetReferencePoint(EGridElementNeighborSide.Right);
+        Tile topTile = currentTile.GetReferencePoint(ETileNeighborSide.Top);
+        Tile rightTile = currentTile.GetReferencePoint(ETileNeighborSide.Right);
+        Tile nextTile = (currentTile.GetReferencePoint(ETileNeighborSide.Top) == null) ? null : currentTile.GetReferencePoint(ETileNeighborSide.Top).GetReferencePoint(ETileNeighborSide.Right);
 
-        handler(currentElement);
+        handler(currentTile);
 
-        while (topElement != null)
+        while (topTile != null)
         {
-            handler(topElement);
+            handler(topTile);
 
-            topElement = topElement.GetReferencePoint(EGridElementNeighborSide.Top);
+            topTile = topTile.GetReferencePoint(ETileNeighborSide.Top);
         }
 
-        while (rightElement != null)
+        while (rightTile != null)
         {
-            handler(rightElement);
+            handler(rightTile);
 
-            rightElement = rightElement.GetReferencePoint(EGridElementNeighborSide.Right);
+            rightTile = rightTile.GetReferencePoint(ETileNeighborSide.Right);
         }
 
-        return ApplyForEachPoint(nextElement, handler);
+        return ApplyForEachPoint(nextTile, handler);
     }
 
-    private GridElement GetPointByIndex(GridElement element, int x, int y)
+    private Tile GetPointByIndex(Tile tile, int x, int y)
     {
-        if (element.X == x && element.Y == y)
+        if (tile.Position.x == x && tile.Position.y == y)
         {
-            return element;
+            return tile;
         }
 
         return null;
     }
 
-    private bool SetEmptyAndDropTarget(GridElement element)
+    private bool SetEmptyAndDropTarget(Tile tile)
     {
-        element.SetEmpty();
+        tile.SetEmpty();
 
         return false;
     }

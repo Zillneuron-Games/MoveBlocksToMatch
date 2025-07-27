@@ -34,11 +34,11 @@ public class DoubleGame : AGame
             {
                 if (!block.IsInTransit)
                 {
-                    if (block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Top) != null && block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Top).State == EGridElementState.Empty)
+                    if (block.CurrentTile.GetReferencePoint(ETileNeighborSide.Top) != null && block.CurrentTile.GetReferencePoint(ETileNeighborSide.Top).State == ETileState.Empty)
                     {
-                        block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Top).SetFull();
-                        block.CurrentElement.SetEmpty();
-                        block.ChangePoint(block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Top));
+                        block.CurrentTile.GetReferencePoint(ETileNeighborSide.Top).SetFull();
+                        block.CurrentTile.SetEmpty();
+                        block.ChangePoint(block.CurrentTile.GetReferencePoint(ETileNeighborSide.Top));
                         block.TransitTransform();
 
                         if (!isNewStepDone)
@@ -67,7 +67,7 @@ public class DoubleGame : AGame
             {
                 block.FinalTransform();
 
-                allBlocksPositions.Add(block.Id, block.CurrentElement.Position);
+                allBlocksPositions.Add(block.Id, block.CurrentTile.AnchoredPosition);
             }
 
             GameplayStep nextStep = new GameplayStep(allMoves.Count, EDirection.Up, allBlocksPositions);
@@ -102,11 +102,11 @@ public class DoubleGame : AGame
             {
                 if (!block.IsInTransit)
                 {
-                    if (block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Bottom) != null && block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Bottom).State == EGridElementState.Empty)
+                    if (block.CurrentTile.GetReferencePoint(ETileNeighborSide.Bottom) != null && block.CurrentTile.GetReferencePoint(ETileNeighborSide.Bottom).State == ETileState.Empty)
                     {
-                        block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Bottom).SetFull();
-                        block.CurrentElement.SetEmpty();
-                        block.ChangePoint(block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Bottom));
+                        block.CurrentTile.GetReferencePoint(ETileNeighborSide.Bottom).SetFull();
+                        block.CurrentTile.SetEmpty();
+                        block.ChangePoint(block.CurrentTile.GetReferencePoint(ETileNeighborSide.Bottom));
                         block.TransitTransform();
 
                         if (!isNewStepDone)
@@ -135,7 +135,7 @@ public class DoubleGame : AGame
             {
                 block.FinalTransform();
 
-                allBlocksPositions.Add(block.Id, block.CurrentElement.Position);
+                allBlocksPositions.Add(block.Id, block.CurrentTile.AnchoredPosition);
             }
 
             GameplayStep nextStep = new GameplayStep(allMoves.Count, EDirection.Down, allBlocksPositions);
@@ -170,11 +170,11 @@ public class DoubleGame : AGame
             {
                 if (!block.IsInTransit)
                 {
-                    if (block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Left) != null && block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Left).State == EGridElementState.Empty)
+                    if (block.CurrentTile.GetReferencePoint(ETileNeighborSide.Left) != null && block.CurrentTile.GetReferencePoint(ETileNeighborSide.Left).State == ETileState.Empty)
                     {
-                        block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Left).SetFull();
-                        block.CurrentElement.SetEmpty();
-                        block.ChangePoint(block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Left));
+                        block.CurrentTile.GetReferencePoint(ETileNeighborSide.Left).SetFull();
+                        block.CurrentTile.SetEmpty();
+                        block.ChangePoint(block.CurrentTile.GetReferencePoint(ETileNeighborSide.Left));
                         block.TransitTransform();
 
                         if (!isNewStepDone)
@@ -204,7 +204,7 @@ public class DoubleGame : AGame
             {
                 block.FinalTransform();
 
-                allBlocksPositions.Add(block.Id, block.CurrentElement.Position);
+                allBlocksPositions.Add(block.Id, block.CurrentTile.AnchoredPosition);
             }
 
             GameplayStep nextStep = new GameplayStep(allMoves.Count, EDirection.Left, allBlocksPositions);
@@ -239,11 +239,11 @@ public class DoubleGame : AGame
             {
                 if (!block.IsInTransit)
                 {
-                    if (block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Right) != null && block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Right).State == EGridElementState.Empty)
+                    if (block.CurrentTile.GetReferencePoint(ETileNeighborSide.Right) != null && block.CurrentTile.GetReferencePoint(ETileNeighborSide.Right).State == ETileState.Empty)
                     {
-                        block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Right).SetFull();
-                        block.CurrentElement.SetEmpty();
-                        block.ChangePoint(block.CurrentElement.GetReferencePoint(EGridElementNeighborSide.Right));
+                        block.CurrentTile.GetReferencePoint(ETileNeighborSide.Right).SetFull();
+                        block.CurrentTile.SetEmpty();
+                        block.ChangePoint(block.CurrentTile.GetReferencePoint(ETileNeighborSide.Right));
                         block.TransitTransform();
 
                         if (!isNewStepDone)
@@ -272,7 +272,7 @@ public class DoubleGame : AGame
             {
                 block.FinalTransform();
 
-                allBlocksPositions.Add(block.Id, block.CurrentElement.Position);
+                allBlocksPositions.Add(block.Id, block.CurrentTile.AnchoredPosition);
             }
 
             GameplayStep nextStep = new GameplayStep(allMoves.Count, EDirection.Right, allBlocksPositions);
@@ -316,13 +316,13 @@ public class DoubleGame : AGame
 
             foreach (ABlock block in allMovableBlocks)
             {
-                block.CurrentElement.SetEmpty();
+                block.CurrentTile.SetEmpty();
 
                 Vector2 blockPosition = prevStep.GetPositionById(block.Id);
 
                 block.ChangePoint(gameBoardGrid[(int)blockPosition.x, (int)blockPosition.y]);
 
-                block.CurrentElement.SetFull();
+                block.CurrentTile.SetFull();
             }
         }
 
@@ -364,7 +364,8 @@ public class DoubleGame : AGame
 
         foreach (ABlock block in allBlocks)
         {
-            block.BlockPosition = new Vector3(block.CurrentElement.X, block.CurrentElement.Y, 0.0f);
+            block.AnchoredPosition = block.CurrentTile.AnchoredPosition;
+            block.Show();
         }
     }
 
@@ -396,7 +397,7 @@ public class DoubleGame : AGame
 
         foreach (ABlock block in allBlocks)
         {
-            block.BlockPosition = new Vector3(200, 200, 200);
+            block.Hide();
         }
     }
 
@@ -417,19 +418,19 @@ public class DoubleGame : AGame
 
         foreach (ABlock block in allBlocks)
         {
-            if (Vector3.Distance(block.BlockPosition, new Vector3(block.CurrentElement.X, block.CurrentElement.Y, 0.0f)) >= minDistance)
+            if (Vector3.Distance(block.AnchoredPosition, block.CurrentTile.AnchoredPosition) >= minDistance)
             {
-                block.BlockPosition = Vector3.Lerp(block.BlockPosition, new Vector3(block.CurrentElement.X, block.CurrentElement.Y, 0.0f), lerpAlpha);
+                block.AnchoredPosition = Vector3.Lerp(block.AnchoredPosition, block.CurrentTile.AnchoredPosition, lerpAlpha);
             }
             else
             {
-                block.BlockPosition = new Vector3(block.CurrentElement.X, block.CurrentElement.Y, 0.0f);
+                block.AnchoredPosition = block.CurrentTile.AnchoredPosition;
             }
         }
 
         foreach (ABlock block in allBlocks)
         {
-            if (block.BlockPosition != new Vector3(block.CurrentElement.X, block.CurrentElement.Y, 0.0f))
+            if (block.AnchoredPosition != block.CurrentTile.AnchoredPosition)
             {
                 return;
             }
@@ -437,7 +438,7 @@ public class DoubleGame : AGame
 
         ThrowTransitOverEvent();
 
-        if (inscriptionBlockRed.CurrentElement == targetBlockRed.CurrentElement && inscriptionBlockBlue.CurrentElement == targetBlockBlue.CurrentElement)
+        if (inscriptionBlockRed.CurrentTile == targetBlockRed.CurrentTile && inscriptionBlockBlue.CurrentTile == targetBlockBlue.CurrentTile)
         {
             SoundManager.Instance.PlayStoneStop();
 
@@ -452,9 +453,46 @@ public class DoubleGame : AGame
             ThrowErrorEvent(EErrorType.StepsCount);
         }
 
-        if (id == 1 && inscriptionBlockRed.CurrentElement.X == inscriptionBlockBlue.CurrentElement.X)
+        if (id == 1 && inscriptionBlockRed.CurrentTile.Position.x == inscriptionBlockBlue.CurrentTile.Position.x)
         {
             ThrowErrorEvent(EErrorType.AvailableSteps);
         }
+    }
+
+    public override Board GetBoardState()
+    {
+        int coloredPawnsCount = 2;
+        bool hasMobileBlocks = mobileBlocks != null;
+        bool hasStaticBlocks = staticBlocks != null;
+        int mobileBlocksCount = hasMobileBlocks ? mobileBlocks.Count : 0;
+        int staticBlocksCount = hasStaticBlocks ? staticBlocks.Count : 0;
+
+        Piece[] targets = new Piece[coloredPawnsCount];
+        targets[0] = new Piece(targetBlockRed.CurrentTile.Position, EPawnColor.Red);
+        targets[1] = new Piece(targetBlockBlue.CurrentTile.Position, EPawnColor.Blue);
+
+        Pawn[] pawns = new Pawn[coloredPawnsCount + mobileBlocksCount];
+        pawns[0] = new Pawn(inscriptionBlockRed.CurrentTile.Position, EPawnColor.Red);
+        pawns[1] = new Pawn(inscriptionBlockBlue.CurrentTile.Position, EPawnColor.Blue);
+
+        if (hasMobileBlocks)
+        {
+            for (int i = coloredPawnsCount; i < mobileBlocksCount + coloredPawnsCount; i++)
+            {
+                pawns[i] = new Pawn(mobileBlocks[i].CurrentTile.Position, EPawnColor.Grey);
+            }
+        }
+
+        Block[] blocks = new Block[staticBlocksCount];
+
+        if (hasStaticBlocks)
+        {
+            for (int i = 0; i < staticBlocksCount; i++)
+            {
+                blocks[i] = new Block(staticBlocks[i].CurrentTile.Position);
+            }
+        }
+
+        return new Board(gameBoardGrid.Width, gameBoardGrid.Height, pawns, blocks, targets);
     }
 }

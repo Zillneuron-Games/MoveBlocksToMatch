@@ -1,9 +1,9 @@
 using System;
 
 /// <summary>
-/// Grid element relative element side
+/// Grid tile relative tile side
 /// </summary>
-public enum EGridElementNeighborSide : byte
+public enum ETileNeighborSide : byte
 {
     Bottom = 0,
     Top = 1,

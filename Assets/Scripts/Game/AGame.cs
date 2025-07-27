@@ -220,8 +220,9 @@ public abstract class AGame
 
     public abstract void MoveBlockObjects(float lerpAlpha, float minDistance);
 
+    public abstract Board GetBoardState();
+
     protected abstract void StartStoneMatchEffects();
 
     #endregion Methods
-
 }
