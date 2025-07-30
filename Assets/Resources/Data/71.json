@@ -1,0 +1,1 @@
+{"Id":71,"StageId":5,"GameId":11,"MinimumStepsCount":17,"Red":{"x":1,"y":4},"Blue":{"x":1,"y":0},"Green":{"x":2,"y":1},"RedTarget":{"x":6,"y":3},"BlueTarget":{"x":6,"y":1},"GreenTarget":{"x":5,"y":2},"Mobiles":[{"x":1,"y":2}],"Statics":[{"x":0,"y":2},{"x":0,"y":3},{"x":0,"y":4},{"x":1,"y":3},{"x":2,"y":2},{"x":2,"y":0},{"x":4,"y":1},{"x":4,"y":2},{"x":4,"y":3}]}

@@ -1,5 +1,7 @@
+using System;
 using UnityEngine;
 
+[Serializable]
 public struct Vector2Int
 {
     public int x;
@@ -29,6 +31,16 @@ public struct Vector2Int
     public static bool operator !=(Vector2Int a, Vector2Int b)
     {
         return !a.Equals(b);
+    }
+    
+    public static implicit operator Vector2(Vector2Int source)
+    {
+        return new Vector2(source.x, source.y);
+    }
+
+    public static explicit operator Vector2Int(Vector2 source)
+    {
+        return new Vector2Int((int)source.x, (int)source.y);
     }
 
     public override bool Equals(object obj)

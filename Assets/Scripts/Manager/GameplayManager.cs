@@ -128,29 +128,29 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
             SortedDictionary<int, Vector2> allBlocksPositions = new SortedDictionary<int, Vector2>();
 
-            InscriptionBlock inscriptionBlockRed = new InscriptionBlock(indexCounter, inscriptionRed, gameBoardGrid[(int)gameData.InscriptionBlockPositionRed.x, (int)gameData.InscriptionBlockPositionRed.y]);
-            allBlocksPositions.Add(indexCounter, gameData.InscriptionBlockPositionRed);
+            InscriptionBlock inscriptionBlockRed = new InscriptionBlock(indexCounter, inscriptionRed, gameBoardGrid[(int)gameData.Red.x, (int)gameData.Red.y]);
+            allBlocksPositions.Add(indexCounter, gameData.Red);
             indexCounter++;
 
-            InscriptionBlock inscriptionBlockBlue = new InscriptionBlock(indexCounter, inscriptionBlue, gameBoardGrid[(int)gameData.InscriptionBlockPositionBlue.x, (int)gameData.InscriptionBlockPositionBlue.y]);
-            allBlocksPositions.Add(indexCounter, gameData.InscriptionBlockPositionBlue);
+            InscriptionBlock inscriptionBlockBlue = new InscriptionBlock(indexCounter, inscriptionBlue, gameBoardGrid[(int)gameData.Blue.x, (int)gameData.Blue.y]);
+            allBlocksPositions.Add(indexCounter, gameData.Blue);
             indexCounter++;
 
-            TargetBlock targetBlockRed = new TargetBlock(indexCounter, targetRed, gameBoardGrid[(int)gameData.InscriptionBlockTargetPositionRed.x, (int)gameData.InscriptionBlockTargetPositionRed.y]);
+            TargetBlock targetBlockRed = new TargetBlock(indexCounter, targetRed, gameBoardGrid[(int)gameData.RedTarget.x, (int)gameData.RedTarget.y]);
             indexCounter++;
 
-            TargetBlock targetBlockBlue = new TargetBlock(indexCounter, targetBlue, gameBoardGrid[(int)gameData.InscriptionBlockTargetPositionBlue.x, (int)gameData.InscriptionBlockTargetPositionBlue.y]);
+            TargetBlock targetBlockBlue = new TargetBlock(indexCounter, targetBlue, gameBoardGrid[(int)gameData.BlueTarget.x, (int)gameData.BlueTarget.y]);
             indexCounter++;
 
             List<MobileBlock> mobileBlocks = null;
 
-            if (gameData.MobileBlocksPositions != null && gameData.MobileBlocksPositions.Count > 0)
+            if (gameData.Mobiles != null && gameData.Mobiles.Count > 0)
             {
                 mobileBlocks = new List<MobileBlock>();
 
                 int mobileBlocksIndexCounter = 0;
 
-                foreach (Vector2 pos in gameData.MobileBlocksPositions)
+                foreach (Vector2 pos in gameData.Mobiles)
                 {
                     MobileBlock tempBlock = new MobileBlock(indexCounter, this.mobileBlocks[mobileBlocksIndexCounter], gameBoardGrid[(int)pos.x, (int)pos.y]);
                     mobileBlocks.Add(tempBlock);
@@ -162,13 +162,13 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
             List<StaticBlock> staticBlocks = null;
 
-            if (gameData.StaticBlocksPositions != null && gameData.StaticBlocksPositions.Count > 0)
+            if (gameData.Statics != null && gameData.Statics.Count > 0)
             {
                 staticBlocks = new List<StaticBlock>();
 
                 int staticBlocksIndexCounter = 0;
 
-                foreach (Vector2 pos in gameData.StaticBlocksPositions)
+                foreach (Vector2 pos in gameData.Statics)
                 {
                     StaticBlock tempBlock = new StaticBlock(indexCounter, this.staticBlocks[staticBlocksIndexCounter], gameBoardGrid[(int)pos.x, (int)pos.y]);
                     staticBlocks.Add(tempBlock);
@@ -192,36 +192,36 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
             SortedDictionary<int, Vector2> allBlocksPositions = new SortedDictionary<int, Vector2>();
 
-            InscriptionBlock inscriptionBlockRed = new InscriptionBlock(indexCounter, inscriptionRed, gameBoardGrid[(int)gameData.InscriptionBlockPositionRed.x, (int)gameData.InscriptionBlockPositionRed.y]);
-            allBlocksPositions.Add(indexCounter, gameData.InscriptionBlockPositionRed);
+            InscriptionBlock inscriptionBlockRed = new InscriptionBlock(indexCounter, inscriptionRed, gameBoardGrid[(int)gameData.Red.x, (int)gameData.Red.y]);
+            allBlocksPositions.Add(indexCounter, gameData.Red);
             indexCounter++;
 
-            InscriptionBlock inscriptionBlockBlue = new InscriptionBlock(indexCounter, inscriptionBlue, gameBoardGrid[(int)gameData.InscriptionBlockPositionBlue.x, (int)gameData.InscriptionBlockPositionBlue.y]);
-            allBlocksPositions.Add(indexCounter, gameData.InscriptionBlockPositionBlue);
+            InscriptionBlock inscriptionBlockBlue = new InscriptionBlock(indexCounter, inscriptionBlue, gameBoardGrid[(int)gameData.Blue.x, (int)gameData.Blue.y]);
+            allBlocksPositions.Add(indexCounter, gameData.Blue);
             indexCounter++;
 
-            InscriptionBlock inscriptionBlockYellow = new InscriptionBlock(indexCounter, inscriptionBlockThird, gameBoardGrid[(int)gameData.InscriptionBlockPositionYellow.x, (int)gameData.InscriptionBlockPositionYellow.y]);
-            allBlocksPositions.Add(indexCounter, gameData.InscriptionBlockPositionYellow);
+            InscriptionBlock inscriptionBlockGreen = new InscriptionBlock(indexCounter, inscriptionBlockThird, gameBoardGrid[(int)gameData.Green.x, (int)gameData.Green.y]);
+            allBlocksPositions.Add(indexCounter, gameData.Green);
             indexCounter++;
 
-            TargetBlock targetBlockRed = new TargetBlock(indexCounter, targetRed, gameBoardGrid[(int)gameData.InscriptionBlockTargetPositionRed.x, (int)gameData.InscriptionBlockTargetPositionRed.y]);
+            TargetBlock targetBlockRed = new TargetBlock(indexCounter, targetRed, gameBoardGrid[(int)gameData.RedTarget.x, (int)gameData.RedTarget.y]);
             indexCounter++;
 
-            TargetBlock targetBlockBlue = new TargetBlock(indexCounter, targetBlue, gameBoardGrid[(int)gameData.InscriptionBlockTargetPositionBlue.x, (int)gameData.InscriptionBlockTargetPositionBlue.y]);
+            TargetBlock targetBlockBlue = new TargetBlock(indexCounter, targetBlue, gameBoardGrid[(int)gameData.BlueTarget.x, (int)gameData.BlueTarget.y]);
             indexCounter++;
 
-            TargetBlock targetBlockYellow = new TargetBlock(indexCounter, targetThird, gameBoardGrid[(int)gameData.InscriptionBlockTargetPositionYellow.x, (int)gameData.InscriptionBlockTargetPositionYellow.y]);
+            TargetBlock targetBlockGreen = new TargetBlock(indexCounter, targetThird, gameBoardGrid[(int)gameData.GreenTarget.x, (int)gameData.GreenTarget.y]);
             indexCounter++;
 
             List<MobileBlock> mobileBlocks = null;
 
-            if (gameData.MobileBlocksPositions != null && gameData.MobileBlocksPositions.Count > 0)
+            if (gameData.Mobiles != null && gameData.Mobiles.Count > 0)
             {
                 mobileBlocks = new List<MobileBlock>();
 
                 int mobileBlocksIndexCounter = 0;
 
-                foreach (Vector2 pos in gameData.MobileBlocksPositions)
+                foreach (Vector2 pos in gameData.Mobiles)
                 {
                     MobileBlock tempBlock = new MobileBlock(indexCounter, this.mobileBlocks[mobileBlocksIndexCounter], gameBoardGrid[(int)pos.x, (int)pos.y]);
                     mobileBlocks.Add(tempBlock);
@@ -233,13 +233,13 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
             List<StaticBlock> staticBlocks = null;
 
-            if (gameData.StaticBlocksPositions != null && gameData.StaticBlocksPositions.Count > 0)
+            if (gameData.Statics != null && gameData.Statics.Count > 0)
             {
                 staticBlocks = new List<StaticBlock>();
 
                 int staticBlocksIndexCounter = 0;
 
-                foreach (Vector2 pos in gameData.StaticBlocksPositions)
+                foreach (Vector2 pos in gameData.Statics)
                 {
                     StaticBlock tempBlock = new StaticBlock(indexCounter, this.staticBlocks[staticBlocksIndexCounter], gameBoardGrid[(int)pos.x, (int)pos.y]);
                     staticBlocks.Add(tempBlock);
@@ -251,7 +251,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
             Stack<GameplayStep> allStepsContainer = new Stack<GameplayStep>();
             allStepsContainer.Push(new GameplayStep(0, EDirection.None, allBlocksPositions));
 
-            currentGame = new TripleGame(gameBoardGrid, gameData.Id, gameDataDynamic.BestSteps, gameDataDynamic.BestCoins, gameData.MinimumStepsCount,gameDataDynamic.GameCount, inscriptionBlockRed, inscriptionBlockBlue, inscriptionBlockYellow,targetBlockRed, targetBlockBlue, targetBlockYellow,mobileBlocks, staticBlocks, allStepsContainer);
+            currentGame = new TripleGame(gameBoardGrid, gameData.Id, gameDataDynamic.BestSteps, gameDataDynamic.BestCoins, gameData.MinimumStepsCount,gameDataDynamic.GameCount, inscriptionBlockRed, inscriptionBlockBlue, inscriptionBlockGreen,targetBlockRed, targetBlockBlue, targetBlockGreen,mobileBlocks, staticBlocks, allStepsContainer);
         }
 
         currentGame.PutBlockObjects();

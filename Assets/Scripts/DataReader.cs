@@ -60,9 +60,9 @@ public static class DataReader
 
         TextAsset gameInfoJson = Resources.Load(dataPathFull, typeof(TextAsset)) as TextAsset;
 
-        GameDataOld gameDataOld = JsonUtility.FromJson<GameDataOld>(gameInfoJson.text);
-        //GameData gameData = JsonUtility.FromJson<GameData>(gameInfoJson.text);
-        GameData gameData = new GameData(gameDataOld.ID, gameDataOld.MinimumStepsCount, gameDataOld.InscriptionStonePositionRed, gameDataOld.InscriptionStonePositionBlue, gameDataOld.InscriptionStonePositionYellow, gameDataOld.InscriptionStoneTargetPositionRed, gameDataOld.InscriptionStoneTargetPositionBlue, gameDataOld.InscriptionStoneTargetPositionYellow, gameDataOld.MobilStonesPositions, gameDataOld.StaticStonesPositions);
+        //GameDataOld gameDataOld = JsonUtility.FromJson<GameDataOld>(gameInfoJson.text);
+        GameData gameData = JsonUtility.FromJson<GameData>(gameInfoJson.text);
+        //GameData gameData = new GameData(gameDataOld.ID, gameDataOld.PuzzleID, gameDataOld.RoomID, gameDataOld.MinimumStepsCount, gameDataOld.InscriptionStonePositionRed, gameDataOld.InscriptionStonePositionBlue, gameDataOld.InscriptionStonePositionYellow, gameDataOld.InscriptionStoneTargetPositionRed, gameDataOld.InscriptionStoneTargetPositionBlue, gameDataOld.InscriptionStoneTargetPositionYellow, gameDataOld.MobilStonesPositions, gameDataOld.StaticStonesPositions);
 
         //GameData _game_data = JsonMapper.ToObject<GameData>(_game_info_json.text);
 

@@ -3,16 +3,16 @@ using UnityEngine;
 
 public class TripleGame : AGame
 {
-    private InscriptionBlock inscriptionBlockYellow;
+    private InscriptionBlock inscriptionBlockGreen;
 
-    private TargetBlock targetBlockYellow;
+    private TargetBlock targetBlockGreen;
 
-    public TripleGame(GameBoardGrid gameBoardGrid, int id, int stepsBest, int coinsBest, int stepsMinimum, int playedNumber, InscriptionBlock inscriptionBlockRed, InscriptionBlock inscriptionBlockBlue, InscriptionBlock inscriptionBlockYellow,
-                        TargetBlock targetBlockRed, TargetBlock targeBlockBlue, TargetBlock targetBlockYellow, List<MobileBlock> mobileBlock, List<StaticBlock> staticBlocks, Stack<GameplayStep> allMoves)
+    public TripleGame(GameBoardGrid gameBoardGrid, int id, int stepsBest, int coinsBest, int stepsMinimum, int playedNumber, InscriptionBlock inscriptionBlockRed, InscriptionBlock inscriptionBlockBlue, InscriptionBlock inscriptionBlockGreen,
+                        TargetBlock targetBlockRed, TargetBlock targeBlockBlue, TargetBlock targetBlockGreen, List<MobileBlock> mobileBlock, List<StaticBlock> staticBlocks, Stack<GameplayStep> allMoves)
                         : base(gameBoardGrid, id, stepsBest, coinsBest, stepsMinimum, playedNumber, inscriptionBlockRed, inscriptionBlockBlue, targetBlockRed, targeBlockBlue, mobileBlock, staticBlocks, allMoves)
     {
-        this.inscriptionBlockYellow = inscriptionBlockYellow;
-        this.targetBlockYellow = targetBlockYellow;
+        this.inscriptionBlockGreen = inscriptionBlockGreen;
+        this.targetBlockGreen = targetBlockGreen;
     }
 
 
@@ -24,7 +24,7 @@ public class TripleGame : AGame
 
         allMovableBlocks.Add(inscriptionBlockRed);
         allMovableBlocks.Add(inscriptionBlockBlue);
-        allMovableBlocks.Add(inscriptionBlockYellow);
+        allMovableBlocks.Add(inscriptionBlockGreen);
 
         if (mobileBlocks != null && mobileBlocks.Count > 0)
         {
@@ -94,7 +94,7 @@ public class TripleGame : AGame
 
         allMovableBlocks.Add(inscriptionBlockRed);
         allMovableBlocks.Add(inscriptionBlockBlue);
-        allMovableBlocks.Add(inscriptionBlockYellow);
+        allMovableBlocks.Add(inscriptionBlockGreen);
 
         if (mobileBlocks != null && mobileBlocks.Count > 0)
         {
@@ -164,7 +164,7 @@ public class TripleGame : AGame
 
         allMovableBlocks.Add(inscriptionBlockRed);
         allMovableBlocks.Add(inscriptionBlockBlue);
-        allMovableBlocks.Add(inscriptionBlockYellow);
+        allMovableBlocks.Add(inscriptionBlockGreen);
 
         if (mobileBlocks != null && mobileBlocks.Count > 0)
         {
@@ -234,7 +234,7 @@ public class TripleGame : AGame
 
         allMovableBlocks.Add(inscriptionBlockRed);
         allMovableBlocks.Add(inscriptionBlockBlue);
-        allMovableBlocks.Add(inscriptionBlockYellow);
+        allMovableBlocks.Add(inscriptionBlockGreen);
 
         if (mobileBlocks != null && mobileBlocks.Count > 0)
         {
@@ -317,7 +317,7 @@ public class TripleGame : AGame
 
             allMovableBlocks.Add(inscriptionBlockRed);
             allMovableBlocks.Add(inscriptionBlockBlue);
-            allMovableBlocks.Add(inscriptionBlockYellow);
+            allMovableBlocks.Add(inscriptionBlockGreen);
 
             if (mobileBlocks != null && mobileBlocks.Count > 0)
             {
@@ -346,7 +346,7 @@ public class TripleGame : AGame
     {
         inscriptionBlockRed.StartStoneMatchEffects();
         inscriptionBlockBlue.StartStoneMatchEffects();
-        inscriptionBlockYellow.StartStoneMatchEffects();
+        inscriptionBlockGreen.StartStoneMatchEffects();
     }
 
     public override void PutBlockObjects()
@@ -355,11 +355,11 @@ public class TripleGame : AGame
 
         allBlocks.Add(inscriptionBlockRed);
         allBlocks.Add(inscriptionBlockBlue);
-        allBlocks.Add(inscriptionBlockYellow);
+        allBlocks.Add(inscriptionBlockGreen);
 
         allBlocks.Add(targetBlockRed);
         allBlocks.Add(targetBlockBlue);
-        allBlocks.Add(targetBlockYellow);
+        allBlocks.Add(targetBlockGreen);
 
         if (mobileBlocks != null && mobileBlocks.Count > 0)
         {
@@ -390,11 +390,11 @@ public class TripleGame : AGame
 
         allBlocks.Add(inscriptionBlockRed);
         allBlocks.Add(inscriptionBlockBlue);
-        allBlocks.Add(inscriptionBlockYellow);
+        allBlocks.Add(inscriptionBlockGreen);
 
         allBlocks.Add(targetBlockRed);
         allBlocks.Add(targetBlockBlue);
-        allBlocks.Add(targetBlockYellow);
+        allBlocks.Add(targetBlockGreen);
 
         if (mobileBlocks != null && mobileBlocks.Count > 0)
         {
@@ -424,7 +424,7 @@ public class TripleGame : AGame
 
         allBlocks.Add(inscriptionBlockRed);
         allBlocks.Add(inscriptionBlockBlue);
-        allBlocks.Add(inscriptionBlockYellow);
+        allBlocks.Add(inscriptionBlockGreen);
 
         if (mobileBlocks != null && mobileBlocks.Count > 0)
         {
@@ -457,7 +457,7 @@ public class TripleGame : AGame
 
         ThrowTransitOverEvent();
 
-        if (inscriptionBlockRed.CurrentTile == targetBlockRed.CurrentTile && inscriptionBlockBlue.CurrentTile == targetBlockBlue.CurrentTile && inscriptionBlockYellow.CurrentTile == targetBlockYellow.CurrentTile)
+        if (inscriptionBlockRed.CurrentTile == targetBlockRed.CurrentTile && inscriptionBlockBlue.CurrentTile == targetBlockBlue.CurrentTile && inscriptionBlockGreen.CurrentTile == targetBlockGreen.CurrentTile)
         {
             SoundManager.Instance.PlayStoneStop();
             StartStoneMatchEffects();
@@ -482,12 +482,12 @@ public class TripleGame : AGame
         Piece[] targets = new Piece[coloredPawnsCount];
         targets[0] = new Piece(targetBlockRed.CurrentTile.Position, EPawnColor.Red);
         targets[1] = new Piece(targetBlockBlue.CurrentTile.Position, EPawnColor.Blue);
-        targets[2] = new Piece(targetBlockYellow.CurrentTile.Position, EPawnColor.Green);
+        targets[2] = new Piece(targetBlockGreen.CurrentTile.Position, EPawnColor.Green);
 
         Pawn[] pawns = new Pawn[coloredPawnsCount + mobileBlocks.Count + staticBlocks.Count];
         pawns[0] = new Pawn(inscriptionBlockRed.CurrentTile.Position, EPawnColor.Red);
         pawns[1] = new Pawn(inscriptionBlockBlue.CurrentTile.Position, EPawnColor.Blue);
-        pawns[2] = new Pawn(inscriptionBlockYellow.CurrentTile.Position, EPawnColor.Green);
+        pawns[2] = new Pawn(inscriptionBlockGreen.CurrentTile.Position, EPawnColor.Green);
 
         if (hasMobileBlocks)
         {

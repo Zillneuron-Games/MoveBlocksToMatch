@@ -46,8 +46,8 @@ public class GameDataOld
     }
 
     public GameDataOld(int _id, int _room_id, int _puzzle_id, int _steps_minimum, string _room_name,
-                    Vector2 _inscription_point_red, Vector2 _inscription_point_blue, Vector2 _inscription_point_yellow,
-                    Vector2 _target_point_red, Vector2 _target_point_blue, Vector2 _target_point_yellow,
+                    Vector2 _inscription_point_red, Vector2 _inscription_point_blue, Vector2 _inscription_point_green,
+                    Vector2 _target_point_red, Vector2 _target_point_blue, Vector2 _target_point_green,
                     List<Vector2> _mobil_stones_positions = null, List<Vector2> _static_stones_positions = null)
     {
         ID = _id;
@@ -59,11 +59,11 @@ public class GameDataOld
 
         InscriptionStonePositionRed = _inscription_point_red;
         InscriptionStonePositionBlue = _inscription_point_blue;
-        InscriptionStonePositionYellow = _inscription_point_yellow;
+        InscriptionStonePositionYellow = _inscription_point_green;
 
         InscriptionStoneTargetPositionRed = _target_point_red;
         InscriptionStoneTargetPositionBlue = _target_point_blue;
-        InscriptionStoneTargetPositionYellow = _target_point_yellow;
+        InscriptionStoneTargetPositionYellow = _target_point_green;
 
         MobilStonesPositions = _mobil_stones_positions;
         StaticStonesPositions = _static_stones_positions;
