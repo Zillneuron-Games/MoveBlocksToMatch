@@ -34,6 +34,7 @@ public class SafeAreaController : MonoBehaviour
         {
             Rect safeArea = Screen.safeArea;
             Vector2 offset = Screen.height > Screen.width ? portraitOffset : landscapeOffset;
+            
             // Convert safe area rectangle to anchor coordinates
             Vector2 anchorMin = safeArea.position + offset;
             Vector2 anchorMax = safeArea.position + safeArea.size;

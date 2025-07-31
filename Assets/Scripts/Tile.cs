@@ -45,20 +45,6 @@ public class Tile
         return null;
     }
 
-    public Tile GetReferencePoint(ETileNeighborSide neighborTileSideFirst, ETileNeighborSide neighborTileSideSecond)
-    {
-        if (neighborTiles.ContainsKey(neighborTileSideFirst))
-        {
-            return neighborTiles[neighborTileSideFirst].GetReferencePoint(neighborTileSideSecond);
-        }
-        else if (neighborTiles.ContainsKey(neighborTileSideSecond))
-        {
-            return neighborTiles[neighborTileSideSecond].GetReferencePoint(neighborTileSideFirst);
-        }
-
-        return null;
-    }
-
     public void AddReferencePoint(ETileNeighborSide neighborTileSide, Tile tile)
     {
         neighborTiles.Add(neighborTileSide, tile);

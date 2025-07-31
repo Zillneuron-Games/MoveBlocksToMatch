@@ -15,8 +15,7 @@ public class GameplayStep
 
     #region Properties
 
-    public int Index => chainIndex;
-   
+
     #endregion Properties
 
     #region Constructors

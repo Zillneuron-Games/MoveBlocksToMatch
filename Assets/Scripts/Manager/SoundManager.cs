@@ -37,7 +37,9 @@ public class SoundManager : MonoBehaviour
     private void PlayAmbientSound()
     {
         if (!isOn)
+        {
             return;
+        }
 
         AudioSource ambientSound = ambientSoundObject.GetComponent<AudioSource>();
 
@@ -47,30 +49,26 @@ public class SoundManager : MonoBehaviour
     public void PlayStoneMove()
     {
         if (!isOn)
+        {
             return;
-
-        //GameObject soundObject = Instantiate(stoneMoveSoundObject);
-        //soundObject.transform.parent = stoneMoveSoundObject.transform;
-
-        //AudioSource stoneMoveSound = soundObject.GetComponent<AudioSource>();
+        }
 
         AudioSource stoneMoveSound = stoneMoveSoundObject.GetComponent<AudioSource>();
         AudioSource newStoneMoveSound = stoneMoveSoundObject.AddComponent<AudioSource>();
-
 
         newStoneMoveSound.clip = stoneMoveSound.clip;
         newStoneMoveSound.maxDistance = stoneMoveSound.maxDistance;
         newStoneMoveSound.Play();
 
         Destroy(newStoneMoveSound, stoneMoveSound.clip.length + 1);
-        //DestroyGameObject destroyObjectComp = soundObject.AddComponent<DestroyGameObject>();
-        //destroyObjectComp.DestroyDelay(stoneMoveSound.clip.length+1);
     }
 
     public void StopStoneMove()
     {
         if (stoneMoveSoundObject.transform.childCount == 0)
+        {
             return;
+        }
 
         AudioSource[] allStoneMoveSound = stoneMoveSoundObject.GetComponents<AudioSource>();
 
@@ -83,7 +81,9 @@ public class SoundManager : MonoBehaviour
     public void PlayStoneStop()
     {
         if (!isOn)
+        {
             return;
+        }
 
         GameObject soundObject = Instantiate(stoneStopSoundObject);
         soundObject.transform.parent = stoneStopSoundObject.transform;
@@ -91,18 +91,16 @@ public class SoundManager : MonoBehaviour
         AudioSource stoneMoveSound = soundObject.GetComponent<AudioSource>();
         stoneMoveSound.Play();
 
-
-        //DestroyGameObject destroyObjectComp = soundObject.AddComponent<DestroyGameObject>();
-        //destroyObjectComp.DestroyDelay(stoneMoveSound.clip.length + 1);
         Destroy(soundObject, stoneMoveSound.clip.length + 1);
     }
 
     public void PlayButtonSound()
     {
         if (!isOn)
+        {
             return;
+        }
 
         buttonSound.Play();
     }
-
 }
