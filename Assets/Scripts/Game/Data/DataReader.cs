@@ -2,7 +2,40 @@ using UnityEngine;
 
 public static class DataReader
 {
+    private const string PlayerPrefsKey_LanguageCode = "language_code";
+    private const string PlayerPrefsKey_FirstLoadOnDevice = "first_load_on_device";
+    private const string PlayerPrefsKey_NextGameId = "next_game_id";
     private const string gameDataPath = @"Data/";
+
+    public static void SetLanguage(ELanguageCode languageCode)
+    {
+        PlayerPrefs.SetInt(PlayerPrefsKey_LanguageCode, (int)languageCode);
+    }
+
+    public static ELanguageCode GetLanguage()
+    {
+        return (ELanguageCode)PlayerPrefs.GetInt(PlayerPrefsKey_LanguageCode, 0);
+    }
+
+    public static void SetFirstLoadOnDevice()
+    {
+        PlayerPrefs.SetInt(PlayerPrefsKey_FirstLoadOnDevice, 1);
+    }
+
+    public static bool GetFirstLoadOnDevice()
+    {
+        return PlayerPrefs.GetInt(PlayerPrefsKey_FirstLoadOnDevice, 0) == 0;
+    }
+
+    public static void SetNextGameId(int gameId)
+    {
+        PlayerPrefs.SetInt(PlayerPrefsKey_NextGameId, gameId);
+    }
+
+    public static int GetNextGameId()
+    {
+        return PlayerPrefs.GetInt(PlayerPrefsKey_NextGameId, 1);
+    }
 
     public static void SetGameDataDynamic(GameDataDynamic gameDataDynamic)
     {

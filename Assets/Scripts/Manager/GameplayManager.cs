@@ -59,8 +59,21 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
     private void Start()
     {
         ViewContext.Instance.Construct();
-        sceneLoader = null;
+        sceneLoader = null;       
+    }
 
+    private void Update()
+    {
+        switch (gameplayState)
+        {
+            case EGameplayState.Gameplay: UpdateGame(); break;
+            case EGameplayState.Transit: UpdateTransit(); break;
+            case EGameplayState.Pause: UpdatePause(); break;
+        }
+    }
+
+    public void StartGame()
+    {
         StartCoroutine(LoadScene());
     }
 
@@ -81,16 +94,6 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
         yield return new WaitForEndOfFrame();
 
         InputManager.Instance.Enable();
-    }
-
-    private void Update()
-    {
-        switch (gameplayState)
-        {
-            case EGameplayState.Gameplay: UpdateGame(); break;
-            case EGameplayState.Transit: UpdateTransit(); break;
-            case EGameplayState.Pause: UpdatePause(); break;
-        }
     }
 
     private void ChangeGameplayState(EGameplayState gameplayState)

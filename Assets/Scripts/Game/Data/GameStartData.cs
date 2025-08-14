@@ -57,6 +57,7 @@ public class GameStartData
 
     public static GameStartData CreateInstance()
     {
+        int nextGameId = DataReader.GetNextGameId();
         GameData[] gameData = new GameData[GamesCount];
         GameDataDynamic[] gameDataDynamic = new GameDataDynamic[GamesCount];
 
@@ -65,10 +66,10 @@ public class GameStartData
             gameData[i] = DataReader.GetGameData(i + 1);
             gameDataDynamic[i] = DataReader.GetGameDataDynamic(i + 1);
         }
-        return new GameStartData(gameData, gameDataDynamic);
+        return new GameStartData(nextGameId, gameData, gameDataDynamic);
     }
 
-    public GameStartData(GameData[] gamesData, GameDataDynamic[] gamesDataDynamic)
+    public GameStartData(int nextGameId, GameData[] gamesData, GameDataDynamic[] gamesDataDynamic)
     {
         this.totalCoins = 0;
         this.nextToLoadGameId = 1;

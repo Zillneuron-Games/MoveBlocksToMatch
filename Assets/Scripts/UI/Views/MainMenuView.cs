@@ -1,8 +1,15 @@
+using TMPro;
 using UnityEngine;
 using Zillneuron.UILayout;
 
 public class MainMenuView : ACompleteView
 {
+    [SerializeField]
+    private TMP_Text playText;
+
+    [SerializeField]
+    private TMP_Text levelText;
+
     protected override void OnLaunch()
     {
         base.OnLaunch();
@@ -17,11 +24,16 @@ public class MainMenuView : ACompleteView
         gameObject.SetActive(false);
     }
 
-    protected void Update()
+    protected override void SetTexts()
     {
-        if (Input.GetKeyDown(KeyCode.X))
-        {
-            ChangeActivityToNext<GameplayView>();
-        }
+        base.SetTexts();
+
+        playText.text = LocalizationManager.Instance.GetPhrase(PhraseCollection.Play);
+        levelText.text = $"{LocalizationManager.Instance.GetPhrase(PhraseCollection.Level)} {DataReader.GetNextGameId().ToString()}"; 
+    }
+
+    public void Play_ButtonHandler()
+    {
+        ChangeActivityToNext<GameplayView>();
     }
 }
