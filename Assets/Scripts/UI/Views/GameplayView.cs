@@ -21,4 +21,9 @@ public class GameplayView : ACompleteView
 
         gameObject.SetActive(false);
     }
+
+    public void Menu_ButtonHandler()
+    {
+        ChangeActivityToPrevious();
+    }
 }

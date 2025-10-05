@@ -36,4 +36,9 @@ public class MainMenuView : ACompleteView
     {
         ChangeActivityToNext<GameplayView>();
     }
+
+    public void Levels_ButtonHandler()
+    {
+        ChangeActivityToNext<LevelsView>();
+    }
 }
