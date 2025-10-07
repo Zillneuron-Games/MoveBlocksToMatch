@@ -6,4 +6,23 @@ public class SettingsDialog : ADialog
     {
         
     }
+
+    protected override void OnLaunch()
+    {
+        base.OnLaunch();
+
+        gameObject.SetActive(true);
+    }
+
+    protected override void OnFinish()
+    {
+        base.OnFinish();
+
+        gameObject.SetActive(false);
+    }
+
+    public void Close_ButtonHandler()
+    {
+        ViewContext.Instance.HideDialog<SettingsDialog>();
+    }
 }

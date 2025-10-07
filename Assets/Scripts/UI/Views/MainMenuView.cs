@@ -41,4 +41,22 @@ public class MainMenuView : ACompleteView
     {
         ChangeActivityToNext<LevelsView>();
     }
+
+    public void Settings_ButtonHandler()
+    {
+        SettingsDialogParameters parameters = new SettingsDialogParameters();
+        ViewContext.Instance.OpenDialog<SettingsDialog>(parameters); 
+    }
+
+    public void Shop_ButtonHandler()
+    {
+        ShopDialogParameters parameters = new ShopDialogParameters();
+        ViewContext.Instance.OpenDialog<ShopDialog>(parameters);
+    }
+
+    public void RemoveAds_ButtonHandler()
+    {
+        ShopDialogParameters parameters = new ShopDialogParameters();
+        ViewContext.Instance.OpenDialog<ShopDialog>(parameters);
+    }
 }

@@ -6,4 +6,18 @@ public class ShopDialog : ADialog
     {
         
     }
+
+    protected override void OnLaunch()
+    {
+        base.OnLaunch();
+
+        gameObject.SetActive(true);
+    }
+
+    protected override void OnFinish()
+    {
+        base.OnFinish();
+
+        gameObject.SetActive(false);
+    }
 }
