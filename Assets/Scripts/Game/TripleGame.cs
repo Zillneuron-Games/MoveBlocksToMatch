@@ -68,13 +68,13 @@ public class TripleGame : AGame
                 backStepsCounter++;
             }
 
-            SortedDictionary<int, Vector2> allBlocksPositions = new SortedDictionary<int, Vector2>();
+            SortedDictionary<int, Vector2Int> allBlocksPositions = new SortedDictionary<int, Vector2Int>();
 
             foreach (ABlock block in allMovableBlocks)
             {
                 block.FinalTransform();
 
-                allBlocksPositions.Add(block.Id, block.CurrentTile.AnchoredPosition);
+                allBlocksPositions.Add(block.Id, block.CurrentTile.Position);
             }
 
             GameplayStep nextStep = new GameplayStep(allMoves.Count, EDirection.Up, allBlocksPositions);
@@ -138,13 +138,13 @@ public class TripleGame : AGame
                 backStepsCounter++;
             }
 
-            SortedDictionary<int, Vector2> allBlockPositions = new SortedDictionary<int, Vector2>();
+            SortedDictionary<int, Vector2Int> allBlockPositions = new SortedDictionary<int, Vector2Int>();
 
             foreach (ABlock block in allMovableBlocks)
             {
                 block.FinalTransform();
 
-                allBlockPositions.Add(block.Id, block.CurrentTile.AnchoredPosition);
+                allBlockPositions.Add(block.Id, block.CurrentTile.Position);
             }
 
             GameplayStep nextStep = new GameplayStep(allMoves.Count, EDirection.Down, allBlockPositions);
@@ -208,13 +208,13 @@ public class TripleGame : AGame
                 backStepsCounter++;
             }
 
-            SortedDictionary<int, Vector2> allBlocksPositions = new SortedDictionary<int, Vector2>();
+            SortedDictionary<int, Vector2Int> allBlocksPositions = new SortedDictionary<int, Vector2Int>();
 
             foreach (ABlock block in allMovableBlocks)
             {
                 block.FinalTransform();
 
-                allBlocksPositions.Add(block.Id, block.CurrentTile.AnchoredPosition);
+                allBlocksPositions.Add(block.Id, block.CurrentTile.Position);
             }
 
             GameplayStep nextStep = new GameplayStep(allMoves.Count, EDirection.Left, allBlocksPositions);
@@ -278,13 +278,13 @@ public class TripleGame : AGame
                 backStepsCounter++;
             }
 
-            SortedDictionary<int, Vector2> allBlocksPositions = new SortedDictionary<int, Vector2>();
+            SortedDictionary<int, Vector2Int> allBlocksPositions = new SortedDictionary<int, Vector2Int>();
 
             foreach (ABlock block in allMovableBlocks)
             {
                 block.FinalTransform();
 
-                allBlocksPositions.Add(block.Id, block.CurrentTile.AnchoredPosition);
+                allBlocksPositions.Add(block.Id, block.CurrentTile.Position);
             }
 
             GameplayStep nextStep = new GameplayStep(allMoves.Count, EDirection.Right, allBlocksPositions);

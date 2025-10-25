@@ -7,6 +7,46 @@
         {
             "Key": "Level",
             "Value": "Level"
+        },
+        {
+            "Key": "Next",
+            "Value": "Next"
+        },
+        {
+            "Key": "Steps",
+            "Value": "Steps"
+        },
+        {
+            "Key": "MinimalSteps",
+            "Value": "Minimal Steps"
+        },
+        {
+            "Key": "BestSteps",
+            "Value": "Best Steps"
+        },
+        {
+            "Key": "Restart",
+            "Value": "Restart"
+        },
+        {
+            "Key": "Menu",
+            "Value": "Menu"
+        },
+        {
+            "Key": "Cancel",
+            "Value": "Cancel"
+        },
+        {
+            "Key": "ErrorDefault",
+            "Value": "Something went wrong.\nPlease restart the game."
+        },
+        {
+            "Key": "ErrorAvailableSteps",
+            "Value": "There are no more moves available.\nPlease restart the game."
+        },
+        {
+            "Key": "ErrorStepsCount",
+            "Value": "Too many moves.\nPlease restart the game."
         }
     ]
 }

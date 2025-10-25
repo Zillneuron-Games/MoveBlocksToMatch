@@ -147,9 +147,9 @@ public class InputManager : MonoBehaviour
             ThrowInputEvent(EInputEvent.Menu);
             return;
         }
-        else if (Input.GetKeyDown(KeyCode.P))
+        else if (Input.GetKeyDown(KeyCode.S))
         {
-            ThrowInputEvent(EInputEvent.Pause);
+            ThrowInputEvent(EInputEvent.Settings);
             return;
         }
         else if (Input.GetKeyDown(KeyCode.G))
@@ -159,13 +159,8 @@ public class InputManager : MonoBehaviour
         }
     }
 
-    private void InputListener(object sender, InputEventArgs args)
+    public void ButtonPressed(object sender, InputEventArgs args)
     {
-        if (!isActive)
-        {
-            return;
-        }
-
         ThrowInputEvent(args.InputEvent);
     }
 }

@@ -16,8 +16,6 @@ public class UIManager : MonoBehaviour
 
     private void Awake()
     {
-        // If there is an instance, and it's not me, delete myself.
-
         if (Instance != null && Instance != this)
         {
             Destroy(this);
@@ -30,16 +28,22 @@ public class UIManager : MonoBehaviour
 
     public bool ChangeGameplayState(EGameplayState gameMode, Action nextAction)
     {
+        Debug.LogError($"Change Mode : {gameMode}");
+
         return true;
     }
 
     public void UpdateSteps(int stepsCount)
     {
+        Debug.LogError($"Update Steps : {stepsCount}");
+
         steps = stepsCount;
     }
 
     public void UpdateGameInfo(int stepsCount, int bestSteps, int coins, int bestCoins)
     {
+        Debug.LogError($"Update Info : {stepsCount}, {bestSteps}, {coins}, {bestCoins}");
+
         this.steps = stepsCount;
         this.bestSteps = bestSteps;
         this.bestCoins = bestCoins;
@@ -48,6 +52,8 @@ public class UIManager : MonoBehaviour
 
     public void CreateGame(int minimalSteps, int bestSteps, int bestCoins)
     {
+        Debug.LogError($"Create Game : {minimalSteps}, {bestSteps}, {coins}, {bestCoins}");
+
         this.minimalSteps = minimalSteps;
         this.steps = 0;
         this.coins = 0;
@@ -75,6 +81,8 @@ public class UIManager : MonoBehaviour
 
     public void UpdateErrorInformation(EErrorType errorType)
     {
+        Debug.LogError($"Error : {errorType}");
+
         switch (errorType)
         {
             case EErrorType.AvailableSteps : ; break;
@@ -84,6 +92,6 @@ public class UIManager : MonoBehaviour
 
     public void Disable()
     {
-
+        Debug.LogError("Disable!");
     }
 }

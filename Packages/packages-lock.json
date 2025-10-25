@@ -80,7 +80,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.services.authentication": {
-      "version": "3.5.1",
+      "version": "3.5.2",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -171,11 +171,11 @@
       "url": "https://packages.unity.com"
     },
     "com.zillneuron.uilayout": {
-      "version": "https://haykhhakobyan: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@github.com/Zillneuron-Packages/UILayout.git",
+      "version": "https://haykhhakobyan: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@github.com/Zillneuron-Packages/UILayout.git",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "886ec27b6f24dbcc9e1957f5a4dcd28f50ae3ee4"
+      "hash": "d8285c17f31acaacaaa1d3e39d032648dbc55205"
     },
     "com.zillneuron.utilities": {
       "version": "https://haykhhakobyan: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@github.com/Zillneuron-Packages/Utilities.git",

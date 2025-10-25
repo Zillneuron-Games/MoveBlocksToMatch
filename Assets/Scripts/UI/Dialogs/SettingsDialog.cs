@@ -1,10 +1,20 @@
+using System;
 using Zillneuron.UILayout;
 
 public class SettingsDialog : ADialog
 {
+    private Action onClickClose;
+
+    public static ADialogParameters CreateDialogParameters(Action onClickClose)
+    {
+        return new SettingsDialogParameters(onClickClose);
+    }
+
     public override void SetUp(ADialogParameters parameters)
     {
-        
+        SettingsDialogParameters currentParameters = parameters as SettingsDialogParameters;
+
+        onClickClose = currentParameters.OnClickClose;
     }
 
     protected override void OnLaunch()
@@ -21,8 +31,8 @@ public class SettingsDialog : ADialog
         gameObject.SetActive(false);
     }
 
-    public void Close_ButtonHandler()
+    public void OnClick_Close()
     {
-        ViewContext.Instance.HideDialog<SettingsDialog>();
+        onClickClose();
     }
 }

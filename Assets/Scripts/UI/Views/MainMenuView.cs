@@ -29,7 +29,7 @@ public class MainMenuView : ACompleteView
         base.SetTexts();
 
         playText.text = LocalizationManager.Instance.GetPhrase(PhraseCollection.Play);
-        levelText.text = $"{LocalizationManager.Instance.GetPhrase(PhraseCollection.Level)} {DataReader.GetNextGameId().ToString()}"; 
+        levelText.text = $"{LocalizationManager.Instance.GetPhrase(PhraseCollection.Level)} {DataReader.GetNextGameId()}"; 
     }
 
     public void Play_ButtonHandler()
@@ -44,7 +44,9 @@ public class MainMenuView : ACompleteView
 
     public void Settings_ButtonHandler()
     {
-        SettingsDialogParameters parameters = new SettingsDialogParameters();
+        SettingsDialogParameters parameters = new SettingsDialogParameters(
+            () => { ViewContext.Instance.HideDialog<SettingsDialog>(); });
+
         ViewContext.Instance.OpenDialog<SettingsDialog>(parameters); 
     }
 

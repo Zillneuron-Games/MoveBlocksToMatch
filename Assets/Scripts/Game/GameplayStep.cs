@@ -9,7 +9,7 @@ public class GameplayStep
 
     private int chainIndex;
     private EDirection direction;
-    private SortedDictionary<int, Vector2> blocksPositions;
+    private SortedDictionary<int, Vector2Int> blocksPositions;
 
     #endregion Variables
 
@@ -20,7 +20,7 @@ public class GameplayStep
 
     #region Constructors
 
-    public GameplayStep(int chainIndex, EDirection direction, SortedDictionary<int, Vector2> blocksPositions)
+    public GameplayStep(int chainIndex, EDirection direction, SortedDictionary<int, Vector2Int> blocksPositions)
     {
         this.chainIndex = chainIndex;
         this.direction = direction;

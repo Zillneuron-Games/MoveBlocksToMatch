@@ -6,12 +6,13 @@ public enum EInputEvent : byte
     Down = 1,
     Left = 2,
     Right = 3,
-    Back = 4,
+    Back = 4,    
     Escape = 5,
-    Pause = 6,
-    Menu = 7,
-    Reload = 8,
-    Next = 9,
-    Play = 10,
-    Last = 11
+    Hint = 6,
+    Settings = 7,
+    Menu = 8,
+    Reload = 9,
+    Next = 10,
+    Play = 11,
+    Quit = 12
 }

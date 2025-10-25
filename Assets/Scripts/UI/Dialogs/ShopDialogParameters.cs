@@ -3,5 +3,8 @@ using Zillneuron.UILayout;
 
 public class ShopDialogParameters : ADialogParameters
 {
-    
+    public ShopDialogParameters()
+    {
+
+    }
 }

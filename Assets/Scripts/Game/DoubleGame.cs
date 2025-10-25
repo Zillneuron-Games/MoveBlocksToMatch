@@ -61,13 +61,13 @@ public class DoubleGame : AGame
                 backStepsCounter++;
             }
 
-            SortedDictionary<int, Vector2> allBlocksPositions = new SortedDictionary<int, Vector2>();
+            SortedDictionary<int, Vector2Int> allBlocksPositions = new SortedDictionary<int, Vector2Int>();
 
             foreach (ABlock block in allMovableBlocks)
             {
                 block.FinalTransform();
 
-                allBlocksPositions.Add(block.Id, block.CurrentTile.AnchoredPosition);
+                allBlocksPositions.Add(block.Id, block.CurrentTile.Position);
             }
 
             GameplayStep nextStep = new GameplayStep(allMoves.Count, EDirection.Up, allBlocksPositions);
@@ -129,13 +129,13 @@ public class DoubleGame : AGame
                 backStepsCounter++;
             }
 
-            SortedDictionary<int, Vector2> allBlocksPositions = new SortedDictionary<int, Vector2>();
+            SortedDictionary<int, Vector2Int> allBlocksPositions = new SortedDictionary<int, Vector2Int>();
 
             foreach (ABlock block in allMovableBlocks)
             {
                 block.FinalTransform();
 
-                allBlocksPositions.Add(block.Id, block.CurrentTile.AnchoredPosition);
+                allBlocksPositions.Add(block.Id, block.CurrentTile.Position);
             }
 
             GameplayStep nextStep = new GameplayStep(allMoves.Count, EDirection.Down, allBlocksPositions);
@@ -198,13 +198,13 @@ public class DoubleGame : AGame
                 backStepsCounter++;
             }
 
-            SortedDictionary<int, Vector2> allBlocksPositions = new SortedDictionary<int, Vector2>();
+            SortedDictionary<int, Vector2Int> allBlocksPositions = new SortedDictionary<int, Vector2Int>();
 
             foreach (ABlock block in allMovableBlocks)
             {
                 block.FinalTransform();
 
-                allBlocksPositions.Add(block.Id, block.CurrentTile.AnchoredPosition);
+                allBlocksPositions.Add(block.Id, block.CurrentTile.Position);
             }
 
             GameplayStep nextStep = new GameplayStep(allMoves.Count, EDirection.Left, allBlocksPositions);
@@ -266,13 +266,13 @@ public class DoubleGame : AGame
                 backStepsCounter++;
             }
 
-            SortedDictionary<int, Vector2> allBlocksPositions = new SortedDictionary<int, Vector2>();
+            SortedDictionary<int, Vector2Int> allBlocksPositions = new SortedDictionary<int, Vector2Int>();
 
             foreach (ABlock block in allMovableBlocks)
             {
                 block.FinalTransform();
 
-                allBlocksPositions.Add(block.Id, block.CurrentTile.AnchoredPosition);
+                allBlocksPositions.Add(block.Id, block.CurrentTile.Position);
             }
 
             GameplayStep nextStep = new GameplayStep(allMoves.Count, EDirection.Right, allBlocksPositions);
@@ -319,9 +319,9 @@ public class DoubleGame : AGame
                 block.CurrentTile.SetEmpty();
 
                 Vector2 blockPosition = prevStep.GetPositionById(block.Id);
+                Tile tile = gameBoardGrid[(int)blockPosition.x, (int)blockPosition.y];
 
-                block.ChangePoint(gameBoardGrid[(int)blockPosition.x, (int)blockPosition.y]);
-
+                block.ChangePoint(tile);
                 block.CurrentTile.SetFull();
             }
         }

@@ -1,28 +1,33 @@
+using NUnit.Framework;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using Zillneuron.UILayout;
 
 public class GameplayManager : MonoBehaviour, ITileObjectProvider
 {
     #region Events
 
-    public event EventHandler<EventArgs> onStartGame;
-    public event EventHandler<EventArgs> onPauseGame;
-    public event EventHandler<EventArgs> onWinGame;
-    public event EventHandler<EventArgs> onShowMenu;
+    public event Action<int, int> onStartGame;
+    public event Action<int> onStepsUpdate;
+    public event Action<EDirection> onShowHint;
+    public event Action onShowSettings;
+    public event Action<int, int> onShowMenu;
+    public event Action<EErrorType> onShowError;
+    public event Action<int, int, int, bool> onWinGame;
+    public event Action onEndGame;
+    public event Action onQuitGame;
 
     #endregion Events
 
     #region Variables
 
-    private AsyncOperation sceneLoader;
-
     private float gameEndPauseTime;
     private float blocksMoveSpeed;
     private float blocksMinDistance;
+    private EDirection lastHint;
+    private EErrorType lastError;
 
     #region Inspector
 
@@ -43,7 +48,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
     #endregion Inspector
 
-    public EGameplayState gameplayState;
+    private EGameplayState gameplayState;
     private GameStartData gameStartData;
     private GameBoardGrid gameBoardGrid;
 
@@ -59,7 +64,6 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
     private void Start()
     {
         ViewContext.Instance.Construct();
-        sceneLoader = null;       
     }
 
     private void Update()
@@ -102,9 +106,9 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
         switch (gameplayState)
         {
-            case EGameplayState.Gameplay:
-            case EGameplayState.Pause:
-            case EGameplayState.End: UIManager.Instance.ChangeGameplayState(this.gameplayState, InputManager.Instance.Enable); break;
+            case EGameplayState.Gameplay:; break;
+            case EGameplayState.Pause:;break;
+            case EGameplayState.End: ; break;
             case EGameplayState.Error: UIManager.Instance.ChangeGameplayState(this.gameplayState, InputManager.Instance.Enable); break;
             case EGameplayState.Win: UIManager.Instance.Disable(); UIManager.Instance.ChangeGameplayState(this.gameplayState, null); break;
             case EGameplayState.Transit: UIManager.Instance.Disable(); UIManager.Instance.ChangeGameplayState(this.gameplayState, null); break;
@@ -129,7 +133,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
         {
             int indexCounter = 1;
 
-            SortedDictionary<int, Vector2> allBlocksPositions = new SortedDictionary<int, Vector2>();
+            SortedDictionary<int, Vector2Int> allBlocksPositions = new SortedDictionary<int, Vector2Int>();
 
             InscriptionBlock inscriptionBlockRed = new InscriptionBlock(indexCounter, inscriptionRed, gameBoardGrid[(int)gameData.Red.x, (int)gameData.Red.y]);
             allBlocksPositions.Add(indexCounter, gameData.Red);
@@ -153,7 +157,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
                 int mobileBlocksIndexCounter = 0;
 
-                foreach (Vector2 pos in gameData.Mobiles)
+                foreach (Vector2Int pos in gameData.Mobiles)
                 {
                     MobileBlock tempBlock = new MobileBlock(indexCounter, this.mobileBlocks[mobileBlocksIndexCounter], gameBoardGrid[(int)pos.x, (int)pos.y]);
                     mobileBlocks.Add(tempBlock);
@@ -193,7 +197,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
             GameObject targetThird = null;
             ChooseRandomBlock(gameData.Id, out inscriptionBlockThird, out targetThird);
 
-            SortedDictionary<int, Vector2> allBlocksPositions = new SortedDictionary<int, Vector2>();
+            SortedDictionary<int, Vector2Int> allBlocksPositions = new SortedDictionary<int, Vector2Int>();
 
             InscriptionBlock inscriptionBlockRed = new InscriptionBlock(indexCounter, inscriptionRed, gameBoardGrid[(int)gameData.Red.x, (int)gameData.Red.y]);
             allBlocksPositions.Add(indexCounter, gameData.Red);
@@ -224,7 +228,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
                 int mobileBlocksIndexCounter = 0;
 
-                foreach (Vector2 pos in gameData.Mobiles)
+                foreach (Vector2Int pos in gameData.Mobiles)
                 {
                     MobileBlock tempBlock = new MobileBlock(indexCounter, this.mobileBlocks[mobileBlocksIndexCounter], gameBoardGrid[(int)pos.x, (int)pos.y]);
                     mobileBlocks.Add(tempBlock);
@@ -254,7 +258,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
             Stack<GameplayStep> allStepsContainer = new Stack<GameplayStep>();
             allStepsContainer.Push(new GameplayStep(0, EDirection.None, allBlocksPositions));
 
-            currentGame = new TripleGame(gameBoardGrid, gameData.Id, gameDataDynamic.BestSteps, gameDataDynamic.BestCoins, gameData.MinimumStepsCount,gameDataDynamic.GameCount, inscriptionBlockRed, inscriptionBlockBlue, inscriptionBlockGreen,targetBlockRed, targetBlockBlue, targetBlockGreen,mobileBlocks, staticBlocks, allStepsContainer);
+            currentGame = new TripleGame(gameBoardGrid, gameData.Id, gameDataDynamic.BestSteps, gameDataDynamic.BestCoins, gameData.MinimumStepsCount, gameDataDynamic.GameCount, inscriptionBlockRed, inscriptionBlockBlue, inscriptionBlockGreen, targetBlockRed, targetBlockBlue, targetBlockGreen, mobileBlocks, staticBlocks, allStepsContainer);
         }
 
         currentGame.PutBlockObjects();
@@ -267,7 +271,6 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
         UIManager.Instance.CreateGame(currentGame.MinimumStepsCount, currentGame.BestStepsCount, currentGame.BestCoinsCount);
 
         OnStartGame();
-
         ChangeGameplayState(EGameplayState.Gameplay);
     }
 
@@ -285,6 +288,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
     private void EndGame()
     {
+        OnEndGame();
         ChangeGameplayState(EGameplayState.End);
     }
 
@@ -372,21 +376,24 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
                 {
                     case EGameplayState.Gameplay: currentGame.MoveBlocks(EDirection.None); break;
                     case EGameplayState.Pause: OnStartGame(); ChangeGameplayState(EGameplayState.Gameplay); break;
-                    case EGameplayState.End: HandleMainMenuButtonClick(); break;
+                    case EGameplayState.End: HandleMenuButtonClick(); break;
                 }
+                break;
 
+            case EInputEvent.Hint:
+                HandleHintButtonClick();
                 break;
 
             case EInputEvent.Menu:
-                HandleMainMenuButtonClick();
+                HandleMenuButtonClick();
                 break;
 
             case EInputEvent.Next:
                 HandleNextButtonClick();
                 break;
 
-            case EInputEvent.Pause:
-                HandlePauseButtonClick();
+            case EInputEvent.Settings:
+                HandleSettingsButtonClick();
                 break;
 
             case EInputEvent.Play:
@@ -396,8 +403,8 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
             case EInputEvent.Reload:
                 HandleReloadButtonClick();
                 break;
-            case EInputEvent.Last:
-                HandleLoadExitScene();
+            case EInputEvent.Quit:
+                HandleQuitClick();
                 break;
 
         }
@@ -410,7 +417,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
     private void HandleTransitOver(object sender, EventArgs args)
     {
-        UIManager.Instance.UpdateSteps(currentGame.StepsCount);
+        OnStepsUpdate();
         ChangeGameplayState(EGameplayState.Gameplay);
     }
 
@@ -425,59 +432,39 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
         UIManager.Instance.UpdateGameInfo(currentGame.StepsCount, currentGame.BestStepsCount, currentGame.CoinsCount, currentGame.BestCoinsCount);
 
         Invoke("EndGame", gameEndPauseTime);
-        Invoke("OnShowMenu", gameEndPauseTime);
+        //Invoke("OnShowMenu", gameEndPauseTime);
     }
 
     private void HandleError(object sender, GameErrorEventArgs args)
     {
-        UIManager.Instance.UpdateErrorInformation(args.ErrorType);
+        lastError = args.ErrorType;
 
+        OnShowError();
         ChangeGameplayState(EGameplayState.Error);
     }
 
-    private void HandleMainMenuButtonClick()
+    private void HandleHintButtonClick()
     {
-        if (sceneLoader != null)
-        {
-            return;
-        }
+        lastHint = GetHint();
 
-        sceneLoader = SceneManager.LoadSceneAsync(gameStartData.SceneNames[ESceneName.Menu]);
-        sceneLoader.allowSceneActivation = false;
+        OnShowHint();
+    }
 
-        EndGame();
-
-        InputManager.Instance.Disable();
-
-        EnableLoadedLevel();
+    private void HandleMenuButtonClick()
+    {
+        OnShowMenu();
+        ChangeGameplayState(EGameplayState.Pause);
     }
 
     private void HandleNextButtonClick()
     {
-        if (sceneLoader != null)
-        {
-            return;
-        }
-
-        if (gameStartData.NextToLoadGame == GameStartData.GamesCount)
-        {
-            sceneLoader = SceneManager.LoadSceneAsync(gameStartData.SceneNames[ESceneName.Menu]);
-            sceneLoader.allowSceneActivation = false;
-
-            EndGame();
-
-            InputManager.Instance.Disable();
-        }
-
         gameStartData.NextToLoadGame = gameStartData.NextToLoadGame + 1;
-
         CreateGame(gameStartData.NextToLoadGame);
-        EnableLoadedLevel();
     }
 
-    private void HandlePauseButtonClick()
+    private void HandleSettingsButtonClick()
     {
-        OnPauseGame();
+        OnShowSettings();
         ChangeGameplayState(EGameplayState.Pause);
     }
 
@@ -489,74 +476,110 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
     private void HandleReloadButtonClick()
     {
-        //FirebaseController.Instance.AnalyticsLogEvent(EFirebaseAnalyticsEvent.ReplayGame, LEVEL, GlobalParameters.NextToLoadGame);
         CreateGame(gameStartData.NextToLoadGame);
     }
 
-    private void HandleLoadExitScene()
+    private void HandleQuitClick()
     {
-        if (sceneLoader != null)
-        {
-            return;
-        }
-
-        sceneLoader = SceneManager.LoadSceneAsync(gameStartData.SceneNames[ESceneName.Menu]);
-        sceneLoader.allowSceneActivation = false;
-        
-
-        EndGame();
-
-        InputManager.Instance.Disable();
-
-        EnableLoadedLevel();
+        OnQuitGame();
     }
 
     #endregion
 
+    #region Evennts
+
     private void OnStartGame()
     {
-        EventHandler<EventArgs> temp = onStartGame;
+        Action<int, int> temp = onStartGame;
 
         if (temp != null)
         {
-            temp(this, EventArgs.Empty);
+            temp(currentGame.Id, currentGame.StepsCount);
         }
     }
 
-    private void OnPauseGame()
+    private void OnStepsUpdate()
     {
-        EventHandler<EventArgs> temp = onPauseGame;
+        Action<int> temp = onStepsUpdate;
 
         if (temp != null)
         {
-            temp(this, EventArgs.Empty);
+            temp(currentGame.StepsCount);
         }
     }
 
-    private void OnWinGame()
+    private void OnShowHint()
     {
-        EventHandler<EventArgs> temp = onWinGame;
+        Action<EDirection> temp = onShowHint;
 
         if (temp != null)
         {
-            temp(this, EventArgs.Empty);
+            temp(lastHint);
         }
     }
 
     private void OnShowMenu()
     {
-        EventHandler<EventArgs> temp = onShowMenu;
+        Action<int, int> temp = onShowMenu;
 
         if (temp != null)
         {
-            temp(this, EventArgs.Empty);
+            temp(currentGame.MinimumStepsCount, currentGame.BestStepsCount);
         }
     }
 
-    private void EnableLoadedLevel()
+    private void OnShowSettings()
     {
-        sceneLoader.allowSceneActivation = true;
+        Action temp = onShowSettings;
+
+        if (temp != null)
+        {
+            temp();
+        }
     }
+
+    private void OnShowError()
+    {
+        Action<EErrorType> temp = onShowError;
+
+        if (temp != null)
+        {
+            temp(lastError);
+        }
+        
+    }
+    
+    private void OnWinGame()
+    {
+        Action<int, int, int, bool> temp = onWinGame;
+
+        if (temp != null)
+        {
+            temp(currentGame.StepsCount, currentGame.BestStepsCount, currentGame.MinimumStepsCount, gameStartData.NextToLoadGame <= GameStartData.GamesCount);
+        }
+    }
+
+    private void OnEndGame()
+    {
+        Action temp = onEndGame;
+
+        if (temp != null)
+        {
+            temp();
+        }
+    }
+
+    private void OnQuitGame()
+    {
+        Action temp = onQuitGame;
+
+        if (temp != null)
+        {
+            temp();
+        }        
+    }
+
+    #endregion Events
 
     public GameObject GetTileObject(int x, int y)
     {
@@ -583,12 +606,12 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
         for (int i = 0; i < staticBlocks.Length; i++)
         {
             staticBlocks[i].SetActive(false);
-        }        
+        }
     }
 
     public EDirection GetHint()
     {
-        if(currentGame != null)
+        if (currentGame != null)
         {
             Board board = currentGame.GetBoardState();
             Hint hintManager = new Hint(board);
