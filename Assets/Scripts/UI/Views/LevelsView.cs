@@ -4,8 +4,17 @@ using Zillneuron.UILayout;
 
 public class LevelsView : ACompleteView, ILevelSelector
 {
+    private Canvas canvas;
+
     [SerializeField]
     private LevelPanel[] levelPanels;
+
+    protected override void OnInitialize()
+    {
+        base.OnInitialize();
+
+        canvas = GetComponentInParent<Canvas>(true);
+    }
 
     protected override void ConstructFragments()
     {
@@ -51,14 +60,14 @@ public class LevelsView : ACompleteView, ILevelSelector
     {
         base.OnLaunch();
 
-        gameObject.SetActive(true);
+        canvas.enabled = true;
     }
 
     protected override void OnFinish()
     {
         base.OnFinish();
 
-        gameObject.SetActive(false);
+        canvas.enabled = false;
     }
 
     public void Select(int level)

@@ -4,24 +4,33 @@ using Zillneuron.UILayout;
 
 public class MainMenuView : ACompleteView
 {
+    private Canvas canvas;
+
     [SerializeField]
     private TMP_Text playText;
 
     [SerializeField]
     private TMP_Text levelText;
+    
+    protected override void OnInitialize()
+    {
+        base.OnInitialize();
+
+        canvas = GetComponentInParent<Canvas>(true);
+    }
 
     protected override void OnLaunch()
     {
         base.OnLaunch();
 
-        gameObject.SetActive(true);
+        canvas.enabled = true;
     }
 
     protected override void OnFinish()
     {
         base.OnFinish();
 
-        gameObject.SetActive(false);
+        canvas.enabled = false;
     }
 
     protected override void SetTexts()

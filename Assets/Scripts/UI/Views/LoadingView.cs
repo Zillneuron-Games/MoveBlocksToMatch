@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -6,9 +7,30 @@ using Zillneuron.UILayout;
 
 public class LoadingView : StartView
 {
+    private float loadingBarTargetProgress = 0.16f;
+    private float logoMoveDuration = 0.5f;
+    private Canvas canvas;
+
+
+    [SerializeField]
+    private RectTransform logo;
+
+    [SerializeField]
+    public Vector2 logoTargetPosition;
+
+    [SerializeField]
+    private LoadingBar loadingBar;
+
+    protected override void OnInitialize()
+    {
+        base.OnInitialize();
+
+        canvas = GetComponentInParent<Canvas>(true);
+    }
+
     protected override void OnLaunch()
     {
-        gameObject.SetActive(true);
+        canvas.enabled = true;
 
         base.OnLaunch();
     }
@@ -17,25 +39,33 @@ public class LoadingView : StartView
     {
         base.OnFinish();
 
-        gameObject.SetActive(false);
+        canvas.enabled = false;
     }
 
     protected override void Start()
     {
         base.Start();
 
+        StartLoadingBarProgress();
         InitializeServices();
     }
 
     protected async void InitializeServices()
     {
+        loadingBarTargetProgress = 0.2f;
+
         var initialized = await SignInService.Instance.Initialize();
+
+        loadingBarTargetProgress = 0.4f;
 
         if (initialized)
         {
             if (DataReader.GetFirstLoadOnDevice())
             {
                 var allKeys = await DataManagementService.Instance.GetAllKeys();
+
+                loadingBarTargetProgress = 0.6f;
+
                 if (allKeys.Count == 0)
                 {
                     var saveData = new Dictionary<string, object>()
@@ -56,9 +86,56 @@ public class LoadingView : StartView
                 }
             }
 
+            loadingBarTargetProgress = 0.8f;
+
             await LocalizationManager.Instance.Initialize(DataReader.GetLanguage());
 
-            ChangeActivityToNext<MainMenuView>();
-        }       
+            loadingBarTargetProgress = 1.0f;
+        }
+    }
+
+    private void StartLoadingBarProgress()
+    {
+        StartCoroutine(UpdateLoadingBar());
+    }
+
+    private IEnumerator UpdateLoadingBar()
+    {
+        float currentProgress = loadingBarTargetProgress;
+
+        while (currentProgress < 1)
+        {
+            yield return null;
+
+            currentProgress = Mathf.MoveTowards(currentProgress, loadingBarTargetProgress, Time.deltaTime);
+
+            loadingBar.SetFillPercentage(currentProgress);
+        }
+
+        loadingBar.Hide();
+        StartMoveLogo();
+    }
+
+    public void StartMoveLogo()
+    {
+        StartCoroutine(MoveLogoSmoothly());
+    }
+
+    private IEnumerator MoveLogoSmoothly()
+    {
+        Vector2 startPos = logo.anchoredPosition;
+        float elapsedTime = 0;
+
+        while (elapsedTime < logoMoveDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = Mathf.SmoothStep(0, 1, elapsedTime / logoMoveDuration);
+            logo.anchoredPosition = Vector2.Lerp(startPos, logoTargetPosition, t);
+            yield return null;
+        }
+
+        logo.anchoredPosition = logoTargetPosition;
+
+        ChangeActivityToNext<MainMenuView>();
     }
 }

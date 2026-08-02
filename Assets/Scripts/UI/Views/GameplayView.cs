@@ -8,6 +8,8 @@ using Zillneuron.UILayout;
 
 public class GameplayView : ACompleteView
 {
+    private Canvas canvas;
+
     [SerializeField]
     private GameplayManager gameplayManager;
 
@@ -20,11 +22,18 @@ public class GameplayView : ACompleteView
     [SerializeField]
     private Image[] directionImages;
 
+    protected override void OnInitialize()
+    {
+        base.OnInitialize();
+
+        canvas = GetComponentInParent<Canvas>(true);
+    }
+
     protected override void OnLaunch()
     {
         base.OnLaunch();
 
-        gameObject.SetActive(true);
+        canvas.enabled = true;
 
         gameplayManager.onStartGame -= StartGame;
         gameplayManager.onStartGame += StartGame;
@@ -70,7 +79,7 @@ public class GameplayView : ACompleteView
         gameplayManager.onEndGame -= EndGame;
         gameplayManager.onQuitGame -= QuitGame;
 
-        gameObject.SetActive(false);
+        canvas.enabled = false;
     }
 
     protected override void OnPause()

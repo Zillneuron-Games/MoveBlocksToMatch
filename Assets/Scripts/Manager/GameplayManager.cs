@@ -109,7 +109,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
             case EGameplayState.Gameplay:; break;
             case EGameplayState.Pause:;break;
             case EGameplayState.End: ; break;
-            case EGameplayState.Error: UIManager.Instance.ChangeGameplayState(this.gameplayState, InputManager.Instance.Enable); break;
+            case EGameplayState.Error: ; break;
             case EGameplayState.Win: UIManager.Instance.Disable(); UIManager.Instance.ChangeGameplayState(this.gameplayState, null); break;
             case EGameplayState.Transit: UIManager.Instance.Disable(); UIManager.Instance.ChangeGameplayState(this.gameplayState, null); break;
         }
@@ -339,28 +339,28 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
             case EInputEvent.Up:
                 if (gameplayState == EGameplayState.Gameplay)
                 {
-                    currentGame.MoveBlocks(EDirection.Up);
+                    currentGame.MoveBlocks(EDirection.Left);
                 }
                 break;
 
             case EInputEvent.Down:
                 if (gameplayState == EGameplayState.Gameplay)
                 {
-                    currentGame.MoveBlocks(EDirection.Down);
+                    currentGame.MoveBlocks(EDirection.Right);
                 }
                 break;
 
             case EInputEvent.Left:
                 if (gameplayState == EGameplayState.Gameplay)
                 {
-                    currentGame.MoveBlocks(EDirection.Left);
+                    currentGame.MoveBlocks(EDirection.Down);
                 }
                 break;
 
             case EInputEvent.Right:
                 if (gameplayState == EGameplayState.Gameplay)
                 {
-                    currentGame.MoveBlocks(EDirection.Right);
+                    currentGame.MoveBlocks(EDirection.Up);
                 }
                 break;
 

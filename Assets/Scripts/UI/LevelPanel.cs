@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using Zillneuron.UILayout;
 
 public class LevelPanel : AFragmentView
@@ -11,6 +12,9 @@ public class LevelPanel : AFragmentView
 
     [SerializeField]
     private TMP_Text levelText;
+
+    [SerializeField]
+    private Image lockImage;
 
     public void Construct(ILevelSelector levelSelector)
     {
