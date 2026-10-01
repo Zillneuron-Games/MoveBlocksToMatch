@@ -1,102 +1,74 @@
 using System;
 using UnityEngine;
+using Zillneuron.Utilities;
 
-public class SoundManager : MonoBehaviour
+public class SoundManager :MonoSingleton<SoundManager>
 {
-    public static SoundManager Instance { get; private set; }
+    private bool soundOn;
+    private bool musicOn;
 
-    private bool isOn;
+    [SerializeField]
+    private AudioSource moveSound;
+    [SerializeField]
+    private AudioSource buttonSound;
+    [SerializeField]
+    private AudioSource backgroundMusic;
 
-    public GameObject stoneMoveSoundObject;
-    public GameObject stoneStopSoundObject;
-    public GameObject ambientSoundObject;
+    public bool SoundOn { get { return soundOn; } }
+    public bool MusicOn { get { return musicOn; } }
 
-    public AudioSource buttonSound;
-
-    private void Awake()
+    protected override void Awake()
     {
-        // If there is an instance, and it's not me, delete myself.
+        base.Awake();
 
-        if (Instance != null && Instance != this)
+        soundOn = DataReader.GetSound();
+        musicOn = DataReader.GetMusic();
+    }
+
+    public void SwitchSound(bool on)
+    {
+        DataReader.SetSound(on);
+        soundOn = on;
+    }
+
+    public void SwitchMusic(bool on)
+    {
+        DataReader.SetMusic(on);
+        musicOn = on;
+
+        if (musicOn)
         {
-            Destroy(this);
+            backgroundMusic.Play();
         }
         else
         {
-            Instance = this;
+            backgroundMusic.Pause();
         }
     }
 
-    public void Switch(bool on)
+    public void PlayMoveSound()
     {
-        isOn = on;
-
-        PlayAmbientSound();
-    }
-
-    private void PlayAmbientSound()
-    {
-        if (!isOn)
+        if (!soundOn)
         {
             return;
         }
 
-        AudioSource ambientSound = ambientSoundObject.GetComponent<AudioSource>();
-
-        ambientSound.Play();
+        moveSound.Play();
     }
 
-    public void PlayStoneMove()
+    public void StopMoveSound()
     {
-        if (!isOn)
+        if (!soundOn)
         {
             return;
         }
 
-        AudioSource stoneMoveSound = stoneMoveSoundObject.GetComponent<AudioSource>();
-        AudioSource newStoneMoveSound = stoneMoveSoundObject.AddComponent<AudioSource>();
-
-        newStoneMoveSound.clip = stoneMoveSound.clip;
-        newStoneMoveSound.maxDistance = stoneMoveSound.maxDistance;
-        newStoneMoveSound.Play();
-
-        Destroy(newStoneMoveSound, stoneMoveSound.clip.length + 1);
-    }
-
-    public void StopStoneMove()
-    {
-        if (stoneMoveSoundObject.transform.childCount == 0)
-        {
-            return;
-        }
-
-        AudioSource[] allStoneMoveSound = stoneMoveSoundObject.GetComponents<AudioSource>();
-
-        for (int i = 1; i < allStoneMoveSound.Length; i++)
-        {
-            Destroy(allStoneMoveSound[i]);
-        }
-    }
-
-    public void PlayStoneStop()
-    {
-        if (!isOn)
-        {
-            return;
-        }
-
-        GameObject soundObject = Instantiate(stoneStopSoundObject);
-        soundObject.transform.parent = stoneStopSoundObject.transform;
-
-        AudioSource stoneMoveSound = soundObject.GetComponent<AudioSource>();
-        stoneMoveSound.Play();
-
-        Destroy(soundObject, stoneMoveSound.clip.length + 1);
+        moveSound.Stop();
     }
 
     public void PlayButtonSound()
     {
-        if (!isOn)
+        if (!soundOn)
         {
             return;
         }

@@ -2,10 +2,33 @@ using UnityEngine;
 
 public static class DataReader
 {
+    private const string SoundPrefsKey = "sound";
+    private const string MusicPrefsKey = "music";
     private const string PlayerPrefsKey_LanguageCode = "language_code";
     private const string PlayerPrefsKey_FirstLoadOnDevice = "first_load_on_device";
+    private const string GameDataPrefsKey = "gamedata";
     private const string PlayerPrefsKey_NextGameId = "next_game_id";
     private const string gameDataPath = @"Data/";
+
+    public static void SetSound(bool on)
+    {
+        PlayerPrefs.SetInt(SoundPrefsKey, on ? 1 : 0);
+    }
+
+    public static bool GetSound()
+    {
+        return PlayerPrefs.GetInt(SoundPrefsKey, 1) == 1;
+    }
+
+    public static void SetMusic(bool on)
+    {
+        PlayerPrefs.SetInt(MusicPrefsKey, on ? 1 : 0);
+    }
+
+    public static bool GetMusic()
+    {
+        return PlayerPrefs.GetInt(MusicPrefsKey, 1) == 1;
+    }
 
     public static void SetLanguage(ELanguageCode languageCode)
     {
@@ -45,7 +68,7 @@ public static class DataReader
         }
 
         string gameDataDynamicJson = JsonUtility.ToJson(gameDataDynamic);
-        string dataPathFull = string.Format("{0}{1}", GameStartData.GameDataPrefsKey, gameDataDynamic.Id.ToString());
+        string dataPathFull = string.Format("{0}{1}", GameDataPrefsKey, gameDataDynamic.Id.ToString());
 
         PlayerPrefs.SetString(dataPathFull, gameDataDynamicJson);
     }
@@ -72,7 +95,7 @@ public static class DataReader
             return null;
         }
 
-        string dataPathFull = string.Format("{0}{1}", GameStartData.GameDataPrefsKey, gameId.ToString());
+        string dataPathFull = string.Format("{0}{1}", GameDataPrefsKey, gameId.ToString());
 
         string gameInfoJson = PlayerPrefs.GetString(dataPathFull);
 

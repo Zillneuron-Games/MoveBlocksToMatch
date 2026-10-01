@@ -23,9 +23,6 @@ public class MenuDialog : ADialog
     [SerializeField]
     private TMP_Text menuButtonText;
 
-    [SerializeField]
-    private TMP_Text cancelButtonText;
-
     public static ADialogParameters CreateDialogParameters(string minimalSteps, string bestSteps, string restartButtonName, string menuButtonName, string cancelButtonName, Action onClickRestart, Action onClickMenu, Action onClickCancel)
     {
         return new MenuDialogParameters(minimalSteps, bestSteps, restartButtonName, menuButtonName, cancelButtonName, onClickRestart, onClickMenu, onClickCancel);
@@ -45,7 +42,6 @@ public class MenuDialog : ADialog
         bestStepsText.text = bestSteps;
         restartButtonText.text = currentParameters.RestartButtonName;
         menuButtonText.text = currentParameters.MenuButtonName;
-        cancelButtonText.text = currentParameters.CancelButtonName;
     }
 
     protected override void OnLaunch()

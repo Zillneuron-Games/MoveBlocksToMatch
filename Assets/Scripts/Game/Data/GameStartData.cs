@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class GameStartData
 {
-    private const string SoundPrefsKey = "sound";
-    public const string GameDataPrefsKey = "gamedata";
     public const int GamesCount = 105;
     public const int MaximumStepsCount = 998;
 
@@ -16,32 +14,6 @@ public class GameStartData
     private GameDataDynamic[] gamesDataDynamic;
     private Dictionary<ESceneName, string> sceneNames;
 
-    public bool SoundState
-    {
-        get
-        {
-            if (PlayerPrefs.GetInt(SoundPrefsKey) == 1)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        set
-        {
-            if (value)
-            {
-                PlayerPrefs.SetInt(SoundPrefsKey, 1);
-            }
-            else
-            {
-                PlayerPrefs.SetInt(SoundPrefsKey, 0);
-            }
-        }
-    }
     public int NextToLoadGame
     {
         get { return nextToLoadGameId; }

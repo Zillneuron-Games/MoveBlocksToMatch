@@ -81,7 +81,7 @@ public class TripleGame : AGame
 
             allMoves.Push(nextStep);
 
-            SoundManager.Instance.PlayStoneMove();
+            SoundManager.Instance.PlayMoveSound();
             ThrowFinalTransformEvent();
         }
     }
@@ -151,7 +151,7 @@ public class TripleGame : AGame
 
             allMoves.Push(nextStep);
 
-            SoundManager.Instance.PlayStoneMove();
+            SoundManager.Instance.PlayMoveSound();
             ThrowFinalTransformEvent();
         }
     }
@@ -221,7 +221,7 @@ public class TripleGame : AGame
 
             allMoves.Push(nextStep);
 
-            SoundManager.Instance.PlayStoneMove();
+            SoundManager.Instance.PlayMoveSound();
             ThrowFinalTransformEvent();
         }
     }
@@ -291,7 +291,7 @@ public class TripleGame : AGame
 
             allMoves.Push(nextStep);
 
-            SoundManager.Instance.PlayStoneMove();
+            SoundManager.Instance.PlayMoveSound();
             ThrowFinalTransformEvent();
         }
     }
@@ -338,7 +338,7 @@ public class TripleGame : AGame
             }
         }
 
-        SoundManager.Instance.PlayStoneMove();
+        SoundManager.Instance.PlayMoveSound();
         ThrowFinalTransformEvent();
     }
 
@@ -459,7 +459,8 @@ public class TripleGame : AGame
 
         if (inscriptionBlockRed.CurrentTile == targetBlockRed.CurrentTile && inscriptionBlockBlue.CurrentTile == targetBlockBlue.CurrentTile && inscriptionBlockGreen.CurrentTile == targetBlockGreen.CurrentTile)
         {
-            SoundManager.Instance.PlayStoneStop();
+            SoundManager.Instance.StopMoveSound();
+
             StartStoneMatchEffects();
             ThrowStonesMatchEvent();
             return;

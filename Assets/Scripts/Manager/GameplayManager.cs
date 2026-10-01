@@ -88,7 +88,6 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
         blocksMoveSpeed = 16.0f;
         blocksMinDistance = 0.05f;
 
-        SoundManager.Instance.Switch(gameStartData.SoundState);
         InputManager.Instance.eventInput += HandleInputEvent;
 
         gameBoardGrid = new GameBoardGrid(7, 5, this);

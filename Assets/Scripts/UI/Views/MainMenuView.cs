@@ -7,6 +7,9 @@ public class MainMenuView : ACompleteView
     private Canvas canvas;
 
     [SerializeField]
+    private PurchaseManager purchaseManager;
+
+    [SerializeField]
     private TMP_Text playText;
 
     [SerializeField]
@@ -17,6 +20,8 @@ public class MainMenuView : ACompleteView
         base.OnInitialize();
 
         canvas = GetComponentInParent<Canvas>(true);
+
+        SoundManager.Instance.SwitchMusic(SoundManager.Instance.MusicOn);
     }
 
     protected override void OnLaunch()
@@ -61,13 +66,13 @@ public class MainMenuView : ACompleteView
 
     public void Shop_ButtonHandler()
     {
-        ShopDialogParameters parameters = new ShopDialogParameters();
+        ADialogParameters parameters = ShopDialog.CreateDialogParameters(purchaseManager);
         ViewContext.Instance.OpenDialog<ShopDialog>(parameters);
     }
 
     public void RemoveAds_ButtonHandler()
     {
-        ShopDialogParameters parameters = new ShopDialogParameters();
+        ADialogParameters parameters = ShopDialog.CreateDialogParameters(purchaseManager);
         ViewContext.Instance.OpenDialog<ShopDialog>(parameters);
     }
 }

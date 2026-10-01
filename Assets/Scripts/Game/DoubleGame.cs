@@ -74,7 +74,7 @@ public class DoubleGame : AGame
 
             allMoves.Push(nextStep);
 
-            SoundManager.Instance.PlayStoneMove();
+            SoundManager.Instance.PlayMoveSound();
             ThrowFinalTransformEvent();
         }
     }
@@ -142,7 +142,7 @@ public class DoubleGame : AGame
 
             allMoves.Push(nextStep);
 
-            SoundManager.Instance.PlayStoneMove();
+            SoundManager.Instance.PlayMoveSound();
             ThrowFinalTransformEvent();
         }
     }
@@ -211,7 +211,7 @@ public class DoubleGame : AGame
 
             allMoves.Push(nextStep);
 
-            SoundManager.Instance.PlayStoneMove();
+            SoundManager.Instance.PlayMoveSound();
             ThrowFinalTransformEvent();
         }
     }
@@ -279,7 +279,7 @@ public class DoubleGame : AGame
 
             allMoves.Push(nextStep);
 
-            SoundManager.Instance.PlayStoneMove();
+            SoundManager.Instance.PlayMoveSound();
             ThrowFinalTransformEvent();
         }
     }
@@ -326,7 +326,7 @@ public class DoubleGame : AGame
             }
         }
 
-        SoundManager.Instance.PlayStoneMove();
+        SoundManager.Instance.PlayMoveSound();
         ThrowFinalTransformEvent();
     }
 
@@ -440,7 +440,7 @@ public class DoubleGame : AGame
 
         if (inscriptionBlockRed.CurrentTile == targetBlockRed.CurrentTile && inscriptionBlockBlue.CurrentTile == targetBlockBlue.CurrentTile)
         {
-            SoundManager.Instance.PlayStoneStop();
+            SoundManager.Instance.StopMoveSound();
 
             StartStoneMatchEffects();
             ThrowStonesMatchEvent();

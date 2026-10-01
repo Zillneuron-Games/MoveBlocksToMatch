@@ -47,6 +47,58 @@
         {
             "Key": "ErrorStepsCount",
             "Value": "Too many moves.\nPlease restart the game."
+        },
+        {
+            "Key": "AdsItemTitle",
+            "Value": "{} hints"
+        },
+        {
+            "Key": "AdsItemPrice",
+            "Value": "Watch"
+        },
+        {
+            "Key": "RestorePurchase",
+            "Value": "Restore Purchase"
+        },
+        {
+            "Key": "Sound",
+            "Value": "Sound"
+        },
+        {
+            "Key": "Music",
+            "Value": "Music"
+        },
+        {
+            "Key": "Language",
+            "Value": "Language"
+        },
+        {
+            "Key": "AboutUs",
+            "Value": "About Us"
+        },
+        {
+            "Key": "ContactUs",
+            "Value": "Contact Us"
+        },
+        {
+            "Key": "Help",
+            "Value": "Help"
+        },
+        {
+            "Key": "TermsAndConditions",
+            "Value": "Terms"
+        },
+        {
+            "Key": "PrivacyPolicy",
+            "Value": "Privacy Policy"
+        },
+        {
+            "Key": "SignIn",
+            "Value": "Sign In"
+        },
+        {
+            "Key": "SignOut",
+            "Value": "Sign Out"
         }
     ]
 }
