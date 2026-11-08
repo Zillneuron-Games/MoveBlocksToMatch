@@ -4,39 +4,28 @@
 public class GameDataDynamic
 {
     public int Id;
-    public int BestSteps;
-    public int BestCoins;
-    public int GameCount;
+    public int BestAttempt;
+    public int NumberOfGamesPlayed;
 
     public GameDataDynamic()
     {
         Id = 0;
-        BestSteps = 0;
-        GameCount = 0;
-        BestCoins = 0;
+        BestAttempt = 0;
+        NumberOfGamesPlayed = 0;
     }
 
-    public GameDataDynamic(int id, int bestSteps, int bestCoins, int gameCount)
+    public GameDataDynamic(int id, int bestAttempt, int numberOfGamesPlayed)
     {
         Id = id;
-        BestSteps = bestSteps;
-        GameCount = gameCount;
-        BestCoins = bestCoins;
+        BestAttempt = bestAttempt;
+        NumberOfGamesPlayed = numberOfGamesPlayed;
     }
 
-    public void UpdateBestStep(int bestStep)
+    public void UpdateBestStep(int bestAttempt)
     {
-        if (bestStep < BestSteps)
+        if (bestAttempt < BestAttempt)
         {
-            BestSteps = bestStep;
-        }
-    }
-
-    public void UpdateBestCoins(int bestCoins)
-    {
-        if (bestCoins > BestCoins)
-        {
-            BestCoins = bestCoins;
+            BestAttempt = bestAttempt;
         }
     }
 }

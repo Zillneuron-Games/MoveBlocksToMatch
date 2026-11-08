@@ -54,41 +54,41 @@ public class LoadingView : StartView
     {
         loadingBarTargetProgress = 0.2f;
 
-        var initialized = await SignInService.Instance.Initialize();
+        await AccountService.Instance.InitializeAsync();
 
         loadingBarTargetProgress = 0.4f;
 
-        if (initialized)
+        if (AccountService.Instance.IsCloudAvailable)
         {
-            if (DataReader.GetFirstLoadOnDevice())
+            if (AccountService.Instance.IsFirstLoad)
             {
-                var allKeys = await DataManagementService.Instance.GetAllKeys();
+                //var allKeys = await DataManagementService.Instance.GetAllKeys();
 
                 loadingBarTargetProgress = 0.6f;
 
-                if (allKeys.Count == 0)
-                {
-                    var saveData = new Dictionary<string, object>()
-                    {
-                        { DataManagementService.Key_NextGameId, "1" }
-                    };
-                    var resultData = await DataManagementService.Instance.SaveData(saveData);
+                //if (allKeys.Count == 0)
+                //{
+                //    var saveData = new Dictionary<string, object>()
+                //    {
+                //        { DataManagementService.Key_NextGameId, "1" }
+                //    };
+                //    var resultData = await DataManagementService.Instance.SaveData(saveData);
 
-                    DataReader.SetNextGameId(1);
-                    DataReader.SetFirstLoadOnDevice();
-                }
-                else
-                {
-                    var keys = new HashSet<string>() { DataManagementService.Key_NextGameId };
-                    var loadData = await DataManagementService.Instance.LoadData(keys);
-                    var number = loadData[DataManagementService.Key_NextGameId];
-                    DataReader.SetNextGameId(Convert.ToInt32(loadData[DataManagementService.Key_NextGameId]));
-                }
+                //    //DataReader.SetNextGameId(1);
+                //    //DataReader.SetFirstLoadOnDevice();
+                //}
+                //else
+                //{
+                //    var keys = new HashSet<string>() { DataManagementService.Key_NextGameId };
+                //    var loadData = await DataManagementService.Instance.LoadData(keys);
+                //    var number = loadData[DataManagementService.Key_NextGameId];
+                //    DataReader.SetNextGameId(Convert.ToInt32(loadData[DataManagementService.Key_NextGameId]));
+                //}
             }
 
             loadingBarTargetProgress = 0.8f;
 
-            await LocalizationManager.Instance.Initialize(DataReader.GetLanguage());
+            await LocalizationManager.Instance.Initialize(AccountService.Instance.LanguageCode);
 
             loadingBarTargetProgress = 1.0f;
         }

@@ -64,13 +64,13 @@ public abstract class AGame
 
     public int BestStepsCount
     {
-        get { return gameDataDynamic.BestSteps; }
+        get { return gameDataDynamic.BestAttempt; }
     }
 
-    public int BestCoinsCount
-    {
-        get { return gameDataDynamic.BestCoins; }
-    }
+    //public int BestCoinsCount
+    //{
+    //    get { return gameDataDynamic.BestCoins; }
+    //}
 
     public int MinimumStepsCount
     {
@@ -94,7 +94,7 @@ public abstract class AGame
 
     #region Constructors
 
-    public AGame(GameBoardGrid gameBoardGrid, int id, int stepsBest, int coinsBest, int stepsMinimum, int playedNumber, InscriptionBlock inscriptionBlockRed, InscriptionBlock inscriptionBlockBlue,
+    public AGame(GameBoardGrid gameBoardGrid, int id, int stepsBest/*, int coinsBest*/, int stepsMinimum, int playedNumber, InscriptionBlock inscriptionBlockRed, InscriptionBlock inscriptionBlockBlue,
                         TargetBlock targetBlockRed, TargetBlock targetBlockBlue, List<MobileBlock> mobileBlocks, List<StaticBlock> staticBlocks, Stack<GameplayStep> allMoves)
     {
         this.gameBoardGrid = gameBoardGrid;
@@ -106,7 +106,7 @@ public abstract class AGame
         this.playedNumber = playedNumber;
 
         this.backStepsCounter = 0;
-        this.backStepsMaximum = GameStartData.MaximumStepsCount;
+        this.backStepsMaximum = LevelStartData.MaximumStepsCount;
 
         this.inscriptionBlockRed = inscriptionBlockRed;
         this.inscriptionBlockBlue = inscriptionBlockBlue;
@@ -117,7 +117,7 @@ public abstract class AGame
         this.mobileBlocks = mobileBlocks;
         this.staticBlocks = staticBlocks;
 
-        this.gameDataDynamic = new GameDataDynamic(id, stepsBest, coinsBest, playedNumber + 1);
+        this.gameDataDynamic = new GameDataDynamic(id, stepsBest/*, coinsBest*/, playedNumber + 1);
 
         this.allMoves = allMoves;
     }
@@ -152,7 +152,7 @@ public abstract class AGame
     {
         gameDataDynamic.UpdateBestStep(stepsCounter);
         CalculateCoins();
-        gameDataDynamic.UpdateBestCoins(coinsCounter);
+        //gameDataDynamic.UpdateBestCoins(coinsCounter);
 
         EventHandler<EventArgs> tempBlockMatchEvent = eventBlocksMatch;
 

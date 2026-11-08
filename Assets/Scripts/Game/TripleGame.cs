@@ -7,9 +7,9 @@ public class TripleGame : AGame
 
     private TargetBlock targetBlockGreen;
 
-    public TripleGame(GameBoardGrid gameBoardGrid, int id, int stepsBest, int coinsBest, int stepsMinimum, int playedNumber, InscriptionBlock inscriptionBlockRed, InscriptionBlock inscriptionBlockBlue, InscriptionBlock inscriptionBlockGreen,
+    public TripleGame(GameBoardGrid gameBoardGrid, int id, int stepsBest/*, int coinsBest*/, int stepsMinimum, int playedNumber, InscriptionBlock inscriptionBlockRed, InscriptionBlock inscriptionBlockBlue, InscriptionBlock inscriptionBlockGreen,
                         TargetBlock targetBlockRed, TargetBlock targeBlockBlue, TargetBlock targetBlockGreen, List<MobileBlock> mobileBlock, List<StaticBlock> staticBlocks, Stack<GameplayStep> allMoves)
-                        : base(gameBoardGrid, id, stepsBest, coinsBest, stepsMinimum, playedNumber, inscriptionBlockRed, inscriptionBlockBlue, targetBlockRed, targeBlockBlue, mobileBlock, staticBlocks, allMoves)
+                        : base(gameBoardGrid, id, stepsBest/*, coinsBest*/, stepsMinimum, playedNumber, inscriptionBlockRed, inscriptionBlockBlue, targetBlockRed, targeBlockBlue, mobileBlock, staticBlocks, allMoves)
     {
         this.inscriptionBlockGreen = inscriptionBlockGreen;
         this.targetBlockGreen = targetBlockGreen;
@@ -466,7 +466,7 @@ public class TripleGame : AGame
             return;
         }
 
-        if (stepsCounter > GameStartData.MaximumStepsCount)
+        if (stepsCounter > LevelStartData.MaximumStepsCount)
         {
             ThrowErrorEvent(EErrorType.StepsCount);
         }

@@ -4,9 +4,9 @@ using System.Collections.Generic;
 
 public class DoubleGame : AGame
 {
-    public DoubleGame(GameBoardGrid gameBoardGrid, int id, int stepsBest, int coinsBest, int stepsMinimum, int playedNumber, InscriptionBlock inscriptionBlockRed, InscriptionBlock inscriptionBlockBlue,
+    public DoubleGame(GameBoardGrid gameBoardGrid, int id, int stepsBest/*, int coinsBest*/, int stepsMinimum, int playedNumber, InscriptionBlock inscriptionBlockRed, InscriptionBlock inscriptionBlockBlue,
                         TargetBlock targetBlockRed, TargetBlock targetBlockBlue, List<MobileBlock> mobileBlock, List<StaticBlock> staticBlocks, Stack<GameplayStep> allMoves)
-                         : base(gameBoardGrid, id, stepsBest, coinsBest, stepsMinimum, playedNumber, inscriptionBlockRed, inscriptionBlockBlue, targetBlockRed, targetBlockBlue, mobileBlock, staticBlocks, allMoves)
+                         : base(gameBoardGrid, id, stepsBest/*, coinsBest*/, stepsMinimum, playedNumber, inscriptionBlockRed, inscriptionBlockBlue, targetBlockRed, targetBlockBlue, mobileBlock, staticBlocks, allMoves)
     {
 
     }
@@ -448,7 +448,7 @@ public class DoubleGame : AGame
             return;
         }
 
-        if (stepsCounter > GameStartData.MaximumStepsCount)
+        if (stepsCounter > LevelStartData.MaximumStepsCount)
         {
             ThrowErrorEvent(EErrorType.StepsCount);
         }

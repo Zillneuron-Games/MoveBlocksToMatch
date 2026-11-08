@@ -16,11 +16,25 @@ public class LevelPanel : AFragmentView
     [SerializeField]
     private Image lockImage;
 
+    [SerializeField]
+    private Button levelButton;
+
     public void Construct(ILevelSelector levelSelector)
     {
         base.Construct();
 
-        this.levelSelector = levelSelector;
+        this.levelSelector = levelSelector;      
+    }
+
+    protected override void OnLaunch()
+    {
+        base.OnLaunch();
+
+        bool unlocked = levelSelector.Unlocked(level);
+
+        levelButton.interactable = unlocked;
+        levelText.gameObject.SetActive(unlocked);
+        lockImage.gameObject.SetActive(!unlocked);
     }
 
     protected override void SetTexts()

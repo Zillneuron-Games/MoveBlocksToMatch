@@ -9,7 +9,7 @@ public class UIManager : MonoBehaviour
     private int coins;
 
     private int bestSteps;
-    private int bestCoins;
+    //private int bestCoins;
     private int minimalSteps;
 
     private EGameplayState gameMode;
@@ -40,27 +40,27 @@ public class UIManager : MonoBehaviour
         steps = stepsCount;
     }
 
-    public void UpdateGameInfo(int stepsCount, int bestSteps, int coins, int bestCoins)
+    public void UpdateGameInfo(int stepsCount, int bestSteps, int coins/*, int bestCoins*/)
     {
-        Debug.LogError($"Update Info : {stepsCount}, {bestSteps}, {coins}, {bestCoins}");
+        //Debug.LogError($"Update Info : {stepsCount}, {bestSteps}, {coins}, {bestCoins}");
 
         this.steps = stepsCount;
         this.bestSteps = bestSteps;
-        this.bestCoins = bestCoins;
+        //this.bestCoins = bestCoins;
         this.coins = coins;
     }
 
-    public void CreateGame(int minimalSteps, int bestSteps, int bestCoins)
+    public void CreateGame(int minimalSteps, int bestSteps/*, int bestCoins*/)
     {
-        Debug.LogError($"Create Game : {minimalSteps}, {bestSteps}, {coins}, {bestCoins}");
+        //Debug.LogError($"Create Game : {minimalSteps}, {bestSteps}, {coins}, {bestCoins}");
 
         this.minimalSteps = minimalSteps;
         this.steps = 0;
         this.coins = 0;
         this.bestSteps = bestSteps;
-        this.bestCoins = bestCoins;
+        //this.bestCoins = bestCoins;
 
-        if (this.bestSteps < GameStartData.MaximumStepsCount)
+        if (this.bestSteps < LevelStartData.MaximumStepsCount)
         {
 
         }

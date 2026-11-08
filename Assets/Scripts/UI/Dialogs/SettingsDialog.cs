@@ -179,12 +179,12 @@ public class SettingsDialog : ADialog
     {
         languageButton.interactable = false;
 
-        DataReader.SetLanguage(languageCode.Next());
-        languageCode = DataReader.GetLanguage();
+        AccountService.Instance.SetLanguage(languageCode.Next());
+        languageCode = AccountService.Instance.LanguageCode;
 
         languageFlagImage.sprite = languageFlags[(int)languageCode];
 
-        await LocalizationManager.Instance.Initialize(DataReader.GetLanguage());
+        await LocalizationManager.Instance.Initialize(languageCode);
 
         languageButton.interactable = true;
 

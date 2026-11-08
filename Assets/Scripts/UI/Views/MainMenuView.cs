@@ -43,7 +43,7 @@ public class MainMenuView : ACompleteView
         base.SetTexts();
 
         playText.text = LocalizationManager.Instance.GetPhrase(PhraseCollection.Play);
-        levelText.text = $"{LocalizationManager.Instance.GetPhrase(PhraseCollection.Level)} {DataReader.GetNextGameId()}"; 
+        levelText.text = $"{LocalizationManager.Instance.GetPhrase(PhraseCollection.Level)} {AccountService.Instance.NextLevel}"; 
     }
 
     public void Play_ButtonHandler()

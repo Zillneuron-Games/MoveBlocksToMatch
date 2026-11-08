@@ -50,7 +50,7 @@
         },
         {
             "Key": "AdsItemTitle",
-            "Value": "{} hints"
+            "Value": "{0} hints"
         },
         {
             "Key": "AdsItemPrice",

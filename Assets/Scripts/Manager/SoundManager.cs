@@ -21,19 +21,19 @@ public class SoundManager :MonoSingleton<SoundManager>
     {
         base.Awake();
 
-        soundOn = DataReader.GetSound();
-        musicOn = DataReader.GetMusic();
+        soundOn = AccountService.Instance.SoundEnabled;
+        musicOn = AccountService.Instance.MusicEnabled;
     }
 
     public void SwitchSound(bool on)
     {
-        DataReader.SetSound(on);
+        AccountService.Instance.SetSoundEnabled(on);
         soundOn = on;
     }
 
     public void SwitchMusic(bool on)
     {
-        DataReader.SetMusic(on);
+        AccountService.Instance.SetMusicEnabled(on);
         musicOn = on;
 
         if (musicOn)

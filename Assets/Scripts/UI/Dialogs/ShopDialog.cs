@@ -32,9 +32,9 @@ public class ShopDialog : ADialog
         string adsItemPrice = LocalizationManager.Instance.GetPhrase(PhraseCollection.AdsItemPrice);
         shopItems[0].SetUp(purchaser.FromAdsProductsCount, adsItemTitle, adsItemPrice, purchaser);
 
-        for (int i = 1; i < products.Count; i++)
+        for (int i = 1; i < shopItems.Length; i++)
         {
-            Product product = products[i].ProductFromAppStore;
+            Product product = products[i-1].ProductFromAppStore;
             shopItems[i].SetUp(product.definition.id, CleanLocalizedTitle(product.metadata.localizedTitle), product.metadata.localizedPriceString, purchaser);
         }
     }

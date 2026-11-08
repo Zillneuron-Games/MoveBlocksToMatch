@@ -4,6 +4,8 @@ using Zillneuron.UILayout;
 
 public class LevelsView : ACompleteView, ILevelSelector
 {
+    private int nextGameId;
+
     private Canvas canvas;
 
     [SerializeField]
@@ -29,6 +31,10 @@ public class LevelsView : ACompleteView, ILevelSelector
     protected override void LaunchFragments()
     {
         base.LaunchFragments();
+
+        nextGameId = AccountService.Instance.NextLevel;
+
+        Debug.LogError($"Next Game Id : {nextGameId}");
 
         for (int i = 0; i < levelPanels.Length; i++)
         {
@@ -74,6 +80,11 @@ public class LevelsView : ACompleteView, ILevelSelector
     {
         Debug.LogError($"Level : {level}");
         ChangeActivityToNextAndReplace<GameplayView>();
+    }
+
+    public bool Unlocked(int level)
+    {
+        return level <= nextGameId;
     }
 
     public void Back_ButtonHandler()

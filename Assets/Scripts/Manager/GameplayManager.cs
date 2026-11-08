@@ -49,7 +49,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
     #endregion Inspector
 
     private EGameplayState gameplayState;
-    private GameStartData gameStartData;
+    private LevelStartData gameStartData;
     private GameBoardGrid gameBoardGrid;
 
     private AGame currentGame;
@@ -83,7 +83,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
     private IEnumerator LoadScene()
     {
-        gameStartData = GameStartData.CreateInstance();
+        gameStartData = LevelStartData.CreateInstance();
 
         blocksMoveSpeed = 16.0f;
         blocksMinDistance = 0.05f;
@@ -124,7 +124,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
         HideAllElements();
 
-        GameData gameData = gameStartData.GetGameData(gameId);
+        LevelData gameData = gameStartData.GetGameData(gameId);
 
         GameDataDynamic gameDataDynamic = gameStartData.GetGameDataDynamic(gameId);
 
@@ -186,7 +186,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
             Stack<GameplayStep> allStepsContainer = new Stack<GameplayStep>();
             allStepsContainer.Push(new GameplayStep(0, EDirection.None, allBlocksPositions));
 
-            currentGame = new DoubleGame(gameBoardGrid, gameData.Id, gameDataDynamic.BestSteps, gameDataDynamic.BestCoins, gameData.MinimumStepsCount, gameDataDynamic.GameCount, inscriptionBlockRed, inscriptionBlockBlue, targetBlockRed, targetBlockBlue, mobileBlocks, staticBlocks, allStepsContainer);
+            currentGame = new DoubleGame(gameBoardGrid, gameData.Id, gameDataDynamic.BestAttempt/*, gameDataDynamic.BestCoins*/, gameData.MinimumStepsCount, gameDataDynamic.NumberOfGamesPlayed, inscriptionBlockRed, inscriptionBlockBlue, targetBlockRed, targetBlockBlue, mobileBlocks, staticBlocks, allStepsContainer);
         }
         else
         {
@@ -257,7 +257,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
             Stack<GameplayStep> allStepsContainer = new Stack<GameplayStep>();
             allStepsContainer.Push(new GameplayStep(0, EDirection.None, allBlocksPositions));
 
-            currentGame = new TripleGame(gameBoardGrid, gameData.Id, gameDataDynamic.BestSteps, gameDataDynamic.BestCoins, gameData.MinimumStepsCount, gameDataDynamic.GameCount, inscriptionBlockRed, inscriptionBlockBlue, inscriptionBlockGreen, targetBlockRed, targetBlockBlue, targetBlockGreen, mobileBlocks, staticBlocks, allStepsContainer);
+            currentGame = new TripleGame(gameBoardGrid, gameData.Id, gameDataDynamic.BestAttempt/*, gameDataDynamic.BestCoins*/, gameData.MinimumStepsCount, gameDataDynamic.NumberOfGamesPlayed, inscriptionBlockRed, inscriptionBlockBlue, inscriptionBlockGreen, targetBlockRed, targetBlockBlue, targetBlockGreen, mobileBlocks, staticBlocks, allStepsContainer);
         }
 
         currentGame.PutBlockObjects();
@@ -267,7 +267,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
         currentGame.eventTransitOver += HandleTransitOver;
         currentGame.eventError += HandleError;
 
-        UIManager.Instance.CreateGame(currentGame.MinimumStepsCount, currentGame.BestStepsCount, currentGame.BestCoinsCount);
+        UIManager.Instance.CreateGame(currentGame.MinimumStepsCount, currentGame.BestStepsCount/*, currentGame.BestCoinsCount*/);
 
         OnStartGame();
         ChangeGameplayState(EGameplayState.Gameplay);
@@ -428,7 +428,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
         gameStartData.UpdateDynamicData(currentGame.DynamicData);
 
-        UIManager.Instance.UpdateGameInfo(currentGame.StepsCount, currentGame.BestStepsCount, currentGame.CoinsCount, currentGame.BestCoinsCount);
+        UIManager.Instance.UpdateGameInfo(currentGame.StepsCount, currentGame.BestStepsCount, currentGame.CoinsCount/*, currentGame.BestCoinsCount*/);
 
         Invoke("EndGame", gameEndPauseTime);
         //Invoke("OnShowMenu", gameEndPauseTime);
@@ -554,7 +554,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
         if (temp != null)
         {
-            temp(currentGame.StepsCount, currentGame.BestStepsCount, currentGame.MinimumStepsCount, gameStartData.NextToLoadGame <= GameStartData.GamesCount);
+            temp(currentGame.StepsCount, currentGame.BestStepsCount, currentGame.MinimumStepsCount, gameStartData.NextToLoadGame <= LevelStartData.GamesCount);
         }
     }
 

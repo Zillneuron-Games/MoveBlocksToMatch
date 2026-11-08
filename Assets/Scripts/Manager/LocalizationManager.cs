@@ -9,7 +9,7 @@ public class LocalizationManager : MonoSingleton<LocalizationManager>
     private const string TranslationFilePathTemplate = "Translations/{0}.json";
     private Dictionary<string, string> translations;
 
-    public ELanguageCode LanguageCode { get {  return DataReader.GetLanguage(); }  }
+    public ELanguageCode LanguageCode { get {  return AccountService.Instance.LanguageCode; }  }
     public async Task Initialize(ELanguageCode languageCode)
     {
         translations = new Dictionary<string, string>();

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameStartData
+public class LevelStartData
 {
     public const int GamesCount = 105;
     public const int MaximumStepsCount = 998;
@@ -10,7 +10,7 @@ public class GameStartData
     private int totalCoins;
     private int nextToLoadGameId;
     private int lastGame;
-    private GameData[] gamesData;
+    private LevelData[] gamesData;
     private GameDataDynamic[] gamesDataDynamic;
     private Dictionary<ESceneName, string> sceneNames;
 
@@ -27,21 +27,21 @@ public class GameStartData
     public int TotalCoins => totalCoins;
     public Dictionary<ESceneName, string> SceneNames => sceneNames;
 
-    public static GameStartData CreateInstance()
+    public static LevelStartData CreateInstance()
     {
-        int nextGameId = DataReader.GetNextGameId();
-        GameData[] gameData = new GameData[GamesCount];
+        int nextGameId = AccountService.Instance.NextLevel;
+        LevelData[] gameData = new LevelData[GamesCount];
         GameDataDynamic[] gameDataDynamic = new GameDataDynamic[GamesCount];
 
         for (int i = 0; i < GamesCount; i++)
         {
-            gameData[i] = DataReader.GetGameData(i + 1);
-            gameDataDynamic[i] = DataReader.GetGameDataDynamic(i + 1);
+            gameData[i] = LevelDataReader.GetGameData(i + 1);
+            gameDataDynamic[i] = AccountService.Instance.GetLevelData(i + 1);
         }
-        return new GameStartData(nextGameId, gameData, gameDataDynamic);
+        return new LevelStartData(nextGameId, gameData, gameDataDynamic);
     }
 
-    public GameStartData(int nextGameId, GameData[] gamesData, GameDataDynamic[] gamesDataDynamic)
+    public LevelStartData(int nextGameId, LevelData[] gamesData, GameDataDynamic[] gamesDataDynamic)
     {
         this.totalCoins = 0;
         this.nextToLoadGameId = 1;
@@ -56,29 +56,31 @@ public class GameStartData
 
     public void UpdateDynamicData(GameDataDynamic gameDataDynamic)
     {
-        if (gamesDataDynamic[gameDataDynamic.Id - 1].BestCoins < gameDataDynamic.BestCoins)
-        {
-            totalCoins = totalCoins + gameDataDynamic.BestCoins - gamesDataDynamic[gameDataDynamic.Id - 1].BestCoins;
-        }
+        //if (gamesDataDynamic[gameDataDynamic.Id - 1].BestCoins < gameDataDynamic.BestCoins)
+        //{
+        //    totalCoins = totalCoins + gameDataDynamic.BestCoins - gamesDataDynamic[gameDataDynamic.Id - 1].BestCoins;
+        //}
 
         gamesDataDynamic[gameDataDynamic.Id - 1] = gameDataDynamic;
 
-        DataReader.SetGameDataDynamic(gameDataDynamic);
+        AccountService.Instance.RecordAttempt(gameDataDynamic.Id, gameDataDynamic.BestAttempt);
 
         if (gameDataDynamic.Id < GamesCount)
         {
             GameDataDynamic nextGameDataDynamic = gamesDataDynamic[gameDataDynamic.Id];
 
-            if (nextGameDataDynamic.GameCount == 0)
-            {
-                nextGameDataDynamic.GameCount = 1;
+            AccountService.Instance.SetNextGameId(nextGameDataDynamic.Id);
+
+            if (nextGameDataDynamic.NumberOfGamesPlayed == 0)
+            {                
+                nextGameDataDynamic.NumberOfGamesPlayed = 1;
                 lastGame = nextGameDataDynamic.Id;
-                DataReader.SetGameDataDynamic(nextGameDataDynamic);
+                AccountService.Instance.RecordAttempt(nextGameDataDynamic.Id, nextGameDataDynamic.BestAttempt);
             }
         }
     }
 
-    public GameData GetGameData(int gameId)
+    public LevelData GetGameData(int gameId)
     {
         return gamesData[gameId - 1];
     }
