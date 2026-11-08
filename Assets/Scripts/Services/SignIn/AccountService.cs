@@ -14,7 +14,6 @@ using System.Linq;
 /// </summary>
 public class AccountService : MonoSingleton<AccountService>
 {
-    private const string FirstLoad = "game.account.v3.firstLoad";
     private const string LastAccountKey = "game.account.v3.lastId";
     private const string LastWasGuestKey = "game.account.v3.wasGuest";
     private const string PendingPrefix = "game.account.v3.pending.";
@@ -31,32 +30,27 @@ public class AccountService : MonoSingleton<AccountService>
     private SettingsData _settings = new SettingsData();
     private InventoryData _inventory = new InventoryData();
     private bool _ready;
+    private bool _startupInitialized;
     private bool _hooked;
     private bool _changingAccount;
     private bool _syncing;
 
-    protected override void OnInstanceCreated()
-    {
-        base.OnInstanceCreated();
-
-        _signIn = SignInService.Instance;
-        _cloud = DataSyncService.Instance;
-        _local = DataStoreService.Instance;
-    }
-
-    public bool IsFirstLoad => PlayerPrefs.GetInt(FirstLoad, 0) == 0;
     public string PlayerId => _local.CurrentPlayerId;
     public bool IsReady => _ready && !_changingAccount &&
                            !_signIn.HasPendingLocalAccountChange;
     public bool IsSyncing => _syncing;
-    public bool IsGuest => _signIn.IsGuest && IsCloudAvailable;
-    public bool IsLinked => _signIn.IsLinked && IsCloudAvailable;
+    // Account type is also known while offline; it comes from the selected
+    // local save owner rather than UGS network authorization status.
+    public bool IsGuest => _ready &&
+        PlayerPrefs.GetInt(LastWasGuestKey, 0) == 1;
+    public bool IsLinked => _ready && !IsGuest;
+    // The Welcome page is needed only when no previous account choice exists.
+    public bool NeedsWelcome => !_ready && !PlayerPrefs.HasKey(LastAccountKey);
     public bool IsCloudAvailable => IsReady && !_signIn.IsBusy &&
         _signIn.IsAuthorized &&
         string.Equals(_signIn.PlayerId, PlayerId, StringComparison.Ordinal);
     public bool HasPendingUpload => _ready && PlayerPrefs.GetInt(PendingKey(PlayerId), 0) == 1;
     public int LastUnlockedLevel => ProgressRules.LastUnlockedLevel(_levels);
-    public int NextLevel => PlayerPrefs.GetInt(NextLevelId, LastUnlockedLevel);
     public GameDataDynamic[] Levels => ProgressRules.Clone(_levels);
 
     // Defensive copies. Update through the methods below so changes persist.
@@ -65,18 +59,28 @@ public class AccountService : MonoSingleton<AccountService>
     public bool SoundEnabled => _settings.SoundEnabled;
     public bool MusicEnabled => _settings.MusicEnabled;
     public ELanguageCode LanguageCode => (ELanguageCode)_settings.LanguageCode;
-    public int HintsCount => _inventory.HintsCount;
-
+    public int Hints => _inventory.HintsCount;
+    public int NextLevel => PlayerPrefs.GetInt(NextLevelId, LastUnlockedLevel);
     public event Action<GameDataDynamic[]> OnLevelsChanged;
     public event Action<SettingsData> OnSettingsChanged;
     public event Action<InventoryData> OnInventoryChanged;
     public event Action<string> OnAccountChanged;
     public event Action<Exception> OnSynchronizationFailed;
 
+    public GameDataDynamic GetLevelData(int levelId)
+    {
+        return Levels.FirstOrDefault(m => m.Id == levelId);
+    }
+
+    public void SetNextGameId(int gameId)
+    {
+        PlayerPrefs.SetInt(NextLevelId, gameId);
+    }
+
     /// <summary>
-    /// Initialize authentication and select the matching local save.
-    /// If UGS is offline, load the last local identity (or a temporary offline guest).
-    /// Call this again after connectivity returns to recover UGS authentication.
+    /// Startup: restore a cached identity or a previously chosen local guest.
+    /// A fresh installation stays unselected (NeedsWelcome = true) until a
+    /// button explicitly calls PlayAsGuestAsync or LogInAsync.
     /// </summary>
     public async Task InitializeAsync()
     {
@@ -92,27 +96,77 @@ public class AccountService : MonoSingleton<AccountService>
             try { await _signIn.InitializeAsync(); }
             catch (Exception error) { authError = error; }
 
-            if (authError == null)
+            if (authError == null && !string.IsNullOrEmpty(_signIn.PlayerId))
             {
-                if (string.IsNullOrEmpty(_signIn.PlayerId))
-                    throw new InvalidOperationException("Authentication has no Player ID.");
-                // Local-storage errors should propagate, never fall back to the
-                // previous player's save after authenticating a different user.
                 SelectIdentity(_signIn.PlayerId, _signIn.IsGuest);
+            }
+            else if (PlayerPrefs.HasKey(LastAccountKey))
+            {
+                string lastId = PlayerPrefs.GetString(LastAccountKey, string.Empty);
+                if (authError != null && _signIn.IsAuthorized &&
+                    !string.Equals(_signIn.PlayerId, lastId, StringComparison.Ordinal))
+                    throw new InvalidOperationException(
+                        "Authenticated a different player before account restoration finished.",
+                        authError);
+
+                // Local saves can still be loaded if UGS is unavailable,
+                // or when a previous offline guest has no UGS session yet.
+                if (authError != null)
+                    Debug.LogWarning("UGS unavailable, loading local account: " + authError.Message);
+                RestoreLastLocalIdentity();
             }
             else
             {
-                if (_signIn.HasPendingLocalAccountChange)
-                    throw authError;
-                string lastId = PlayerPrefs.GetString(LastAccountKey, string.Empty);
-                if (_signIn.IsAuthorized &&
-                    !string.Equals(_signIn.PlayerId, lastId, StringComparison.Ordinal))
-                    throw new InvalidOperationException(
-                        "UGS authenticated a different player but identity validation failed.",
-                        authError);
+                // Crucial: do NOT create a guest before the welcome choice.
+                _local.SelectAccount(null);
+                _levels = Array.Empty<GameDataDynamic>();
+                _settings = new SettingsData();
+                _inventory = new InventoryData();
+                _ready = false;
+            }
 
-                Debug.LogWarning("UGS unavailable; using local save: " + authError.Message);
-                RestoreLastLocalIdentity();
+            _startupInitialized = true;
+        }
+        finally
+        {
+            _changingAccount = false;
+            _operationGate.Release();
+        }
+        if (IsCloudAvailable) RequestSync();
+    }
+
+    /// <summary>
+    /// Welcome: Play as Guest. Creates a UGS anonymous account when available,
+    /// but never blocks offline play if Unity Services cannot connect.
+    /// </summary>
+    public async Task PlayAsGuestAsync(CancellationToken cancellationToken = default)
+    {
+        await _operationGate.WaitAsync(cancellationToken);
+        _changingAccount = true;
+        try
+        {
+            RequireStartup();
+            if (_ready)
+            {
+                if (IsGuest) return;
+                throw new InvalidOperationException("A linked account must log out first.");
+            }
+
+            try
+            {
+                await _signIn.InitializeAsync();
+                if (_signIn.IsLinked)
+                    throw new InvalidOperationException("A linked account is already active.");
+                if (_signIn.IsGuest)
+                    SelectIdentity(_signIn.PlayerId, nextIsGuest: true);
+                else
+                    await _signIn.StartNewGuestAsync();
+            }
+            catch (Exception error) when (!_signIn.IsAuthorized &&
+                !_signIn.HasPendingLocalAccountChange)
+            {
+                Debug.LogWarning("Offline guest selected: " + error.Message);
+                SelectIdentity(OfflineGuestId, nextIsGuest: true);
             }
         }
         finally
@@ -123,9 +177,110 @@ public class AccountService : MonoSingleton<AccountService>
         if (IsCloudAvailable) RequestSync();
     }
 
-    public void SetFirstLoadCompleted()
+    /// <summary>
+    /// The ONE Log In method for Welcome and Settings. Guest progress stays
+    /// attached to the same Player ID if linking succeeds. If the provider
+    /// already belongs to another UGS account, SignInService invokes the
+    /// confirmation callback BEFORE replacing the current guest identity.
+    /// On confirmation the previous guest slot is discarded, never merged.
+    /// The callback should open a popup and asynchronously return true/false.
+    /// </summary>
+    public async Task<LoginOutcome> LogInAsync(
+        Func<Task<bool>> confirmReplaceGuestProgress = null,
+        CancellationToken cancellationToken = default)
     {
-        PlayerPrefs.SetInt(FirstLoad, 1);
+        await _operationGate.WaitAsync(cancellationToken);
+        _changingAccount = true;
+        LoginOutcome result;
+        try
+        {
+            RequireStartup();
+            if (IsLinked)
+                throw new InvalidOperationException("Log out before logging into another account.");
+
+            // On a device with no UGS session (Welcome or offline guest),
+            // initialize first. For an offline guest, create a UGS guest
+            // identity and migrate that local slot BEFORE linking Google/Apple.
+            await _signIn.InitializeAsync();
+            if (_ready && PlayerId == OfflineGuestId && !_signIn.IsGuest)
+                await _signIn.StartNewGuestAsync();
+
+            // A freshly created guest with no levels, preferences, or hints
+            // does not need a destructive-change dialog. Meaningful guest
+            // data always requires the caller-provided confirmation.
+            Func<Task<bool>> confirmation = confirmReplaceGuestProgress;
+            if (IsGuest && _levels.Length == 0 &&
+                SettingsData.IsDefault(_settings) &&
+                InventoryData.IsDefault(_inventory))
+                confirmation = () => Task.FromResult(true);
+
+            result = await _signIn.LogInAsync(confirmation, cancellationToken);
+        }
+        finally
+        {
+            _changingAccount = false;
+            _operationGate.Release();
+        }
+
+        // Await the first sync so an existing account's cloud levels/settings/
+        // inventory are loaded BEFORE the UI navigates to Home. Failure does
+        // not erase the local save and SyncAsync reports it via its event.
+        if (result == LoginOutcome.SignedIn ||
+            result == LoginOutcome.GuestLinked ||
+            result == LoginOutcome.SwitchedToExisting)
+        {
+            if (!await SyncAsync())
+                MarkPending(PlayerId, true); // Retry on a later sync/launch.
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Settings: Log Out (linked accounts only). Keep that account's local
+    /// records and pending changes, clear its credentials, then start a fresh
+    /// guest. Offline fallback creates a fresh local-only guest.
+    /// </summary>
+    public async Task LogOutAsync()
+    {
+        RequireStartup();
+        if (!IsLinked)
+            throw new InvalidOperationException("Log Out is only available for linked accounts.");
+
+        // Best-effort flush, without blocking logout if cloud is unavailable.
+        // Unsynced changes remain stored under the old linked Player ID.
+        if (IsCloudAvailable && HasPendingUpload)
+            await SyncAsync();
+
+        await _operationGate.WaitAsync();
+        _changingAccount = true;
+        try
+        {
+            RequireSelected();
+            if (!IsLinked)
+                throw new InvalidOperationException("The selected account changed.");
+
+            _signIn.SignOut(); // Clear UGS and Player Accounts tokens.
+            try
+            {
+                await _signIn.StartNewGuestAsync();
+            }
+            catch (Exception error) when (!_signIn.HasPendingLocalAccountChange &&
+                !_signIn.IsAuthorized)
+            {
+                // The linked session was already cleared successfully. Play
+                // can continue offline; a real UGS guest is created later.
+                Debug.LogWarning("New anonymous UGS account unavailable: " + error.Message);
+                _local.Delete(OfflineGuestId); // Truly fresh guest, not a prior offline save.
+                MarkPending(OfflineGuestId, false);
+                SelectIdentity(OfflineGuestId, nextIsGuest: true);
+            }
+        }
+        finally
+        {
+            _changingAccount = false;
+            _operationGate.Release();
+        }
+        if (IsCloudAvailable) RequestSync();
     }
 
     public void RecordAttempt(int levelId, int steps = 0)
@@ -135,16 +290,6 @@ public class AccountService : MonoSingleton<AccountService>
             _levels, levelId, steps);
         PersistCurrent(updated, markPending: true);
         RequestSync();
-    }
-
-    public GameDataDynamic GetLevelData(int levelId)
-    {
-        return Levels.FirstOrDefault(m => m.Id == levelId);
-    }
-
-    public void SetNextGameId(int gameId)
-    {
-        PlayerPrefs.SetInt(NextLevelId, gameId);
     }
 
     public bool CanPlay(int levelId) =>
@@ -174,15 +319,12 @@ public class AccountService : MonoSingleton<AccountService>
         RequestSync();
     }
 
-    public void SetLanguage(ELanguageCode languageCode)
+    public void SetLanguage(ELanguageCode language)
     {
         RequirePlayable();
-
-        int language = (int)languageCode;
-        if (_settings.LanguageCode == language)
-            return;
+        
         SettingsData updated = Settings;
-        updated.LanguageCode = language;
+        updated.LanguageCode = (int)language;
         updated.LanguageChangedAtUtcTicks = SettingsData.NextTimestamp(
             updated.LanguageChangedAtUtcTicks);
         PersistSettings(updated, markPending: true);
@@ -274,22 +416,37 @@ public class AccountService : MonoSingleton<AccountService>
     /// </summary>
     public async Task SignOutAndStartGuestAsync(bool confirmedGuestLoss)
     {
+        if (IsLinked)
+        {
+            await LogOutAsync();
+            return;
+        }
+
+        // Legacy API: explicitly resetting an existing guest is destructive.
+        if (!confirmedGuestLoss)
+            throw new InvalidOperationException("Confirm guest progress loss first.");
         await _operationGate.WaitAsync();
         _changingAccount = true;
         try
         {
             RequireSelected();
-            if (!IsCloudIdentitySelected())
-                throw new InvalidOperationException("Reconnect authentication first.");
-            _signIn.SignOut(confirmedGuestLoss);
-            await _signIn.StartNewGuestAsync();
+            _signIn.SignOut(confirmedGuestLoss: true);
+            try { await _signIn.StartNewGuestAsync(); }
+            catch (Exception error) when (!_signIn.HasPendingLocalAccountChange &&
+                !_signIn.IsAuthorized)
+            {
+                Debug.LogWarning("New guest is offline: " + error.Message);
+                _local.Delete(OfflineGuestId);
+                MarkPending(OfflineGuestId, false);
+                SelectIdentity(OfflineGuestId, nextIsGuest: true);
+            }
         }
         finally
         {
             _changingAccount = false;
             _operationGate.Release();
         }
-        RequestSync();
+        if (IsCloudAvailable) RequestSync();
     }
 
     /// <summary>
@@ -437,6 +594,8 @@ public class AccountService : MonoSingleton<AccountService>
         if (!string.Equals(PlayerId, playerId, StringComparison.Ordinal))
             throw new InvalidOperationException("Linked account does not match local slot.");
         SaveLastIdentity(playerId, wasGuest: false);
+        // The UI changes from Log In to Log Out without another page load.
+        OnAccountChanged?.Invoke(playerId);
     }
 
     private void OnIdentityChanging(PlayerIdentityChange change)
@@ -618,6 +777,12 @@ public class AccountService : MonoSingleton<AccountService>
         if (!IsCloudIdentitySelected() ||
             !string.Equals(id, PlayerId, StringComparison.Ordinal))
             throw new InvalidOperationException("Authenticated account changed during sync.");
+    }
+
+    private void RequireStartup()
+    {
+        if (!_startupInitialized)
+            throw new InvalidOperationException("Call InitializeAsync at startup first.");
     }
 
     private void RequireSelected()

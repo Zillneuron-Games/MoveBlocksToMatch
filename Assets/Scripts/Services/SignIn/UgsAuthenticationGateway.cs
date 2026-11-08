@@ -11,11 +11,16 @@ public sealed class UgsAuthenticationGateway : IGameAuthentication
     public bool IsSignedIn => AuthenticationService.Instance.IsSignedIn;
     public bool IsAuthorized => AuthenticationService.Instance.IsAuthorized;
     public bool HasUnityIdentity => _hasUnityIdentity;
+    public bool HasCachedSessionToken => AuthenticationService.Instance.SessionTokenExists;
 
     public Task InitializeAsync() => UnityServices.InitializeAsync();
 
-    public Task SignInCachedOrGuestAsync() =>
-        AuthenticationService.Instance.SignInAnonymouslyAsync();
+    public async Task SignInCachedOrGuestAsync()
+    {
+        bool wasCached = AuthenticationService.Instance.SessionTokenExists;
+        await AuthenticationService.Instance.SignInAnonymouslyAsync();
+        if (!wasCached) _hasUnityIdentity = false;
+    }
 
     public async Task RefreshPlayerIdentityAsync()
     {
@@ -23,12 +28,21 @@ public sealed class UgsAuthenticationGateway : IGameAuthentication
         _hasUnityIdentity = info != null && info.GetUnityId() != null;
     }
 
-    public Task LinkToUnityAsync(string accessToken) =>
-        AuthenticationService.Instance.LinkWithUnityAsync(accessToken);
+    public async Task LinkToUnityAsync(string accessToken)
+    {
+        await AuthenticationService.Instance.LinkWithUnityAsync(accessToken);
+        _hasUnityIdentity = true;
+    }
 
     public Task SignInExistingUnityAsync(string accessToken) =>
-        AuthenticationService.Instance.SignInWithUnityAsync(
-            accessToken, new SignInOptions { CreateAccount = false });
+        SignInUnityAsync(accessToken, createAccount: false);
+
+    public async Task SignInUnityAsync(string accessToken, bool createAccount)
+    {
+        await AuthenticationService.Instance.SignInWithUnityAsync(
+            accessToken, new SignInOptions { CreateAccount = createAccount });
+        _hasUnityIdentity = true;
+    }
 
     public void SignOut(bool clearSessionToken)
     {

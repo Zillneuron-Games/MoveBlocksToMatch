@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Unity.Services.Authentication;
 using Zillneuron.Utilities;
 
 /// <summary>
@@ -24,7 +25,6 @@ public class SignInService : MonoSingleton<SignInService>
         _playerAccounts = new UnityPlayerAccountsGateway();
     }
 
-
     public SignInState State { get; private set; } = SignInState.NotInitialized;
     public bool IsBusy => Volatile.Read(ref _busy) != 0;
     public bool IsGuest => State == SignInState.Guest;
@@ -47,8 +47,9 @@ public class SignInService : MonoSingleton<SignInService>
     public event Action<PlayerIdentityChange> IdentityChanged;
 
     /// <summary>
-    /// Initialize UGS, restore the cached session, or create a new guest.
-    /// Caller separately selects the right saved-progress slot at startup.
+    /// Initialize UGS and restore a cached player if one exists. On a completely
+    /// new installation, remain SignedOut until the Welcome screen chooses either
+    /// Log In or Play as Guest. This method NEVER creates a guest implicitly.
     /// </summary>
     public async Task InitializeAsync()
     {
@@ -68,14 +69,160 @@ public class SignInService : MonoSingleton<SignInService>
             if (!_authentication.IsAuthorized)
             {
                 if (_authentication.IsSignedIn)
-                    _authentication.SignOut(false); // Keep cached UGS session.
-                await _authentication.SignInCachedOrGuestAsync();
+                    _authentication.SignOut(false); // Keep the existing cached session.
+
+                if (_authentication.HasCachedSessionToken)
+                    await _authentication.SignInCachedOrGuestAsync();
+                else
+                {
+                    SetState(SignInState.SignedOut);
+                    return;
+                }
             }
 
             await _authentication.RefreshPlayerIdentityAsync();
             SetState(_authentication.HasUnityIdentity ? SignInState.Linked : SignInState.Guest);
         }
         finally { ExitOperation(); }
+    }
+
+    /// <summary>
+    /// The one Log In entry point, used by Welcome and Settings.
+    /// - No current UGS identity: create or sign into a Player Account.
+    /// - Guest + unlinked Player Account: link to same Player ID, keeping progress.
+    /// - Guest + already-linked Player Account: ask for confirmation; switch
+    ///   to the existing account only if accepted.
+    /// Linked players must Log Out before logging into a different identity.
+    /// The optional confirmation callback is invoked AFTER browser login, only
+    /// when an already-linked account is detected. It must display a real UI
+    /// confirmation, not just return true automatically.
+    /// </summary>
+    public async Task<LoginOutcome> LogInAsync(
+        Func<Task<bool>> confirmReplaceGuestProgress = null,
+        CancellationToken cancellationToken = default)
+    {
+        EnterOperation();
+        try
+        {
+            RequireReady();
+            RequireLocalSaveHandler();
+            if (IsLinked)
+                throw new InvalidOperationException("Log out before signing in as another account.");
+            if (IsGuest && !_authentication.IsAuthorized)
+                throw new InvalidOperationException("Reconnect the guest session before linking it.");
+
+            cancellationToken.ThrowIfCancellationRequested();
+            string token = await _playerAccounts.GetAccessTokenAsync(cancellationToken);
+            try
+            {
+                if (IsGuest)
+                {
+                    string guestId = PlayerId;
+                    try
+                    {
+                        await _authentication.LinkToUnityAsync(token);
+                    }
+                    catch (AuthenticationException error) when (
+                        error.ErrorCode == AuthenticationErrorCodes.AccountAlreadyLinked)
+                    {
+                        // No changes to the guest have been made at this point.
+                        if (confirmReplaceGuestProgress == null)
+                            return LoginOutcome.ConfirmationRequired;
+
+                        cancellationToken.ThrowIfCancellationRequested();
+                        if (!await confirmReplaceGuestProgress())
+                            return LoginOutcome.Cancelled;
+
+                        cancellationToken.ThrowIfCancellationRequested();
+                        bool switched = await ChangeUnityIdentityAsync(token,
+                            createAccount: false);
+                        return switched ? LoginOutcome.SwitchedToExisting : LoginOutcome.SameAccount;
+                    }
+
+                    if (!string.Equals(guestId, PlayerId, StringComparison.Ordinal))
+                        throw new InvalidOperationException("Guest linking changed the UGS Player ID.");
+
+                    // UgsAuthenticationGateway marks the Unity identity after a
+                    // successful link. Do not make a second network request here:
+                    // that could fail after the irreversible link succeeded.
+                    SetState(SignInState.Linked);
+                    GuestLinked?.Invoke(guestId);
+                    return LoginOutcome.GuestLinked;
+                }
+
+                // Welcome screen without a guest: this allows first-time creation.
+                bool changed = await ChangeUnityIdentityAsync(token, createAccount: true);
+                return changed ? LoginOutcome.SignedIn : LoginOutcome.SameAccount;
+            }
+            finally
+            {
+                _playerAccounts.SignOut();
+            }
+        }
+        finally { ExitOperation(); }
+    }
+
+    /// <summary>
+    /// Change to an authenticated Unity identity using a token already selected
+    /// in the browser. Tries to restore the previous cached session if the new
+    /// login fails, and never changes the local save slot before UGS succeeds.
+    /// </summary>
+    private async Task<bool> ChangeUnityIdentityAsync(string token, bool createAccount)
+    {
+        string previousId = PlayerId;
+        bool previousWasGuest = IsGuest;
+
+        if (_authentication.IsSignedIn)
+            _authentication.SignOut(false); // Preserve old UGS session for rollback.
+
+        try
+        {
+            await _authentication.SignInUnityAsync(token, createAccount);
+        }
+        catch
+        {
+            if (!string.IsNullOrEmpty(previousId))
+            {
+                try
+                {
+                    if (_authentication.IsSignedIn)
+                        _authentication.SignOut(false);
+                    await _authentication.SignInCachedOrGuestAsync();
+                    if (!string.Equals(previousId, PlayerId, StringComparison.Ordinal))
+                    {
+                        _authentication.SignOut(true);
+                        throw new InvalidOperationException(
+                            "Session recovery returned an unexpected Player ID.");
+                    }
+                    await _authentication.RefreshPlayerIdentityAsync();
+                    SetState(_authentication.HasUnityIdentity
+                        ? SignInState.Linked : SignInState.Guest);
+                }
+                catch
+                {
+                    if (_authentication.IsSignedIn) _authentication.SignOut(false);
+                    SetState(SignInState.SignedOut);
+                }
+            }
+            else
+                SetState(SignInState.SignedOut);
+            throw;
+        }
+
+        string currentId = PlayerId;
+        // Unity sign-in succeeded; selecting the corresponding local slot
+        // must not depend on a second PlayerInfo network request.
+        SetState(SignInState.Linked);
+        if (string.IsNullOrEmpty(currentId))
+            throw new InvalidOperationException("Unity sign-in did not return a Player ID.");
+        if (string.Equals(previousId, currentId, StringComparison.Ordinal))
+            return false;
+
+        _pendingLocalChange = new PlayerIdentityChange(previousId, currentId,
+            discardPreviousGuestProgress: previousWasGuest && previousId != null,
+            currentIsGuest: false);
+        ApplyPendingLocalChangeInternal();
+        return true;
     }
 
     /// <summary>
@@ -102,7 +249,6 @@ public class SignInService : MonoSingleton<SignInService>
                 if (!string.Equals(originalId, PlayerId, StringComparison.Ordinal))
                     throw new InvalidOperationException("Linking unexpectedly changed the Player ID.");
 
-                await _authentication.RefreshPlayerIdentityAsync();
                 SetState(SignInState.Linked);
             }
             finally
@@ -134,76 +280,12 @@ public class SignInService : MonoSingleton<SignInService>
                 throw new InvalidOperationException(
                     "Confirm guest progress loss before switching accounts.");
 
-            string previousId = PlayerId;
-            bool previousWasGuest = IsGuest;
-
-            // Keep previous UGS identity and local data while browser login is pending.
             string token = await _playerAccounts.GetAccessTokenAsync(cancellationToken);
             try
             {
-                if (_authentication.IsSignedIn)
-                    _authentication.SignOut(false); // Attempt to retain cached session.
-
-                try
-                {
-                    await _authentication.SignInExistingUnityAsync(token);
-                }
-                catch
-                {
-                    // Failed UGS login: try to restore the old session.
-                    if (previousId != null)
-                    {
-                        try
-                        {
-                            if (_authentication.IsSignedIn)
-                                _authentication.SignOut(false);
-
-                            await _authentication.SignInCachedOrGuestAsync();
-                            if (!string.Equals(_authentication.PlayerId, previousId,
-                                    StringComparison.Ordinal))
-                            {
-                                // Never let an unintended new guest session become current.
-                                _authentication.SignOut(true);
-                                throw new InvalidOperationException(
-                                    "Session recovery restored a different player.");
-                            }
-
-                            await _authentication.RefreshPlayerIdentityAsync();
-                            SetState(_authentication.HasUnityIdentity
-                                ? SignInState.Linked : SignInState.Guest);
-                        }
-                        catch
-                        {
-                            if (_authentication.IsSignedIn)
-                                _authentication.SignOut(false);
-                            SetState(SignInState.SignedOut);
-                        }
-                    }
-                    else
-                    {
-                        SetState(SignInState.SignedOut);
-                    }
-
-                    throw; // Keep old local progress; caller can retry sign-in.
-                }
+                return await ChangeUnityIdentityAsync(token, createAccount: false);
             }
-            finally
-            {
-                _playerAccounts.SignOut();
-            }
-
-            string currentId = PlayerId;
-            SetState(SignInState.Linked);
-
-            if (string.Equals(previousId, currentId, StringComparison.Ordinal))
-                return false; // Existing account reauthenticated: no save ownership change.
-
-            _pendingLocalChange = new PlayerIdentityChange(
-                previousId, currentId,
-                discardPreviousGuestProgress: previousWasGuest && previousId != null,
-                currentIsGuest: false);
-            ApplyPendingLocalChangeInternal();
-            return true;
+            finally { _playerAccounts.SignOut(); }
         }
         finally { ExitOperation(); }
     }
@@ -236,7 +318,12 @@ public class SignInService : MonoSingleton<SignInService>
         EnterOperation();
         try
         {
-            RequireReady();
+            // Signing out only clears local credentials. Allow it even if
+            // online UGS initialization failed and AccountManager restored
+            // a previously linked local save for offline gameplay.
+            if (_pendingLocalChange != null)
+                throw new InvalidOperationException(
+                    "Apply the pending account change before signing out.");
             RequireLocalSaveHandler();
             if (IsGuest && !confirmedGuestLoss)
                 throw new InvalidOperationException(
@@ -267,8 +354,13 @@ public class SignInService : MonoSingleton<SignInService>
             if (_authentication.IsSignedIn)
                 throw new InvalidOperationException("Sign out before creating a new guest.");
 
+            // Creating a fresh guest must never revive an old linked session.
+            // A cached token means the caller forgot to clear credentials.
+            if (_authentication.HasCachedSessionToken)
+                throw new InvalidOperationException(
+                    "A cached session exists. Clear credentials before starting a fresh guest.");
+
             await _authentication.SignInCachedOrGuestAsync();
-            await _authentication.RefreshPlayerIdentityAsync();
             if (_authentication.HasUnityIdentity)
                 throw new InvalidOperationException(
                     "Expected a new guest but a linked account was restored.");

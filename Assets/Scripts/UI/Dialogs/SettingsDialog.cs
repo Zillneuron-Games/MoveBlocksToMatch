@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,6 +11,12 @@ public class SettingsDialog : ADialog
     private bool musicOn;
     private ELanguageCode languageCode;
     private Action onClickClose;
+
+    [SerializeField]
+    private GameObject logInButton;
+
+    [SerializeField]
+    private GameObject logOutButton;
 
     [SerializeField]
     private ToggleButton soundButton;
@@ -109,6 +116,14 @@ public class SettingsDialog : ADialog
         privacyPolicyText.text = LocalizationManager.Instance.GetPhrase(PhraseCollection.PrivacyPolicy);
         signInText.text = LocalizationManager.Instance.GetPhrase(PhraseCollection.SignIn);
         signOutText.text = LocalizationManager.Instance.GetPhrase(PhraseCollection.SignOut);
+
+        CheckIsGuest();
+    }
+
+    private void CheckIsGuest()
+    {
+        logInButton.SetActive(AccountService.Instance.IsGuest);
+        logOutButton.SetActive(AccountService.Instance.IsLinked);
     }
 
     public void OnClick_Sound()
@@ -162,12 +177,31 @@ public class SettingsDialog : ADialog
 
     public void OnClick_SignIn()
     {
-        
+        SignIn();
+    }
+
+    private async void SignIn()
+    {
+        LoginOutcome result = await AccountService.Instance.LogInAsync(confirmReplaceGuestProgress: ConfirmGuestLossAsync);
+
+        CheckIsGuest();
+    }
+
+    private async Task<bool> ConfirmGuestLossAsync()
+    {
+        return true;
     }
 
     public void OnClick_SignOut()
     {
-        
+        SignOut();
+    }
+
+    private async void SignOut()
+    {
+        await AccountService.Instance.LogOutAsync();
+
+        CheckIsGuest();
     }
 
     public void OnClick_Close()

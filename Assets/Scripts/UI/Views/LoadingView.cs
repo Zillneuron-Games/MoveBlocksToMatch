@@ -7,6 +7,7 @@ using Zillneuron.UILayout;
 
 public class LoadingView : StartView
 {
+    private bool needsWelcome;
     private float loadingBarTargetProgress = 0.16f;
     private float logoMoveDuration = 0.5f;
     private Canvas canvas;
@@ -56,42 +57,71 @@ public class LoadingView : StartView
 
         await AccountService.Instance.InitializeAsync();
 
+        needsWelcome = AccountService.Instance.NeedsWelcome;
+
         loadingBarTargetProgress = 0.4f;
 
-        if (AccountService.Instance.IsCloudAvailable)
+        if (needsWelcome)
         {
-            if (AccountService.Instance.IsFirstLoad)
-            {
-                //var allKeys = await DataManagementService.Instance.GetAllKeys();
+            await Task.Delay(100);
 
-                loadingBarTargetProgress = 0.6f;
+            loadingBarTargetProgress = 0.6f;
 
-                //if (allKeys.Count == 0)
-                //{
-                //    var saveData = new Dictionary<string, object>()
-                //    {
-                //        { DataManagementService.Key_NextGameId, "1" }
-                //    };
-                //    var resultData = await DataManagementService.Instance.SaveData(saveData);
+            await Task.Delay(100);
 
-                //    //DataReader.SetNextGameId(1);
-                //    //DataReader.SetFirstLoadOnDevice();
-                //}
-                //else
-                //{
-                //    var keys = new HashSet<string>() { DataManagementService.Key_NextGameId };
-                //    var loadData = await DataManagementService.Instance.LoadData(keys);
-                //    var number = loadData[DataManagementService.Key_NextGameId];
-                //    DataReader.SetNextGameId(Convert.ToInt32(loadData[DataManagementService.Key_NextGameId]));
-                //}
-            }
+            loadingBarTargetProgress = 0.8f;
 
+            await Task.Delay(100);
+
+            loadingBarTargetProgress = 1.0f;
+        }
+        else
+        {
+            loadingBarTargetProgress = 0.6f;
+
+            await Task.Delay(100);
+            
             loadingBarTargetProgress = 0.8f;
 
             await LocalizationManager.Instance.Initialize(AccountService.Instance.LanguageCode);
 
             loadingBarTargetProgress = 1.0f;
         }
+
+        //if (AccountService.Instance.IsCloudAvailable)
+        //{
+        //    if (AccountService.Instance.IsFirstLoad)
+        //    {
+        //        var allKeys = await DataManagementService.Instance.GetAllKeys();
+
+        //        loadingBarTargetProgress = 0.6f;
+
+        //        if (allKeys.Count == 0)
+        //        {
+        //            var saveData = new Dictionary<string, object>()
+        //            {
+        //                { DataManagementService.Key_NextGameId, "1" }
+        //            };
+        //            var resultData = await DataManagementService.Instance.SaveData(saveData);
+
+        //            //DataReader.SetNextGameId(1);
+        //            //DataReader.SetFirstLoadOnDevice();
+        //        }
+        //        else
+        //        {
+        //            var keys = new HashSet<string>() { DataManagementService.Key_NextGameId };
+        //            var loadData = await DataManagementService.Instance.LoadData(keys);
+        //            var number = loadData[DataManagementService.Key_NextGameId];
+        //            DataReader.SetNextGameId(Convert.ToInt32(loadData[DataManagementService.Key_NextGameId]));
+        //        }
+        //    }
+
+        //    loadingBarTargetProgress = 0.8f;
+
+        //    await LocalizationManager.Instance.Initialize(AccountService.Instance.LanguageCode);
+
+        //    loadingBarTargetProgress = 1.0f;
+        //}
     }
 
     private void StartLoadingBarProgress()
@@ -136,6 +166,13 @@ public class LoadingView : StartView
 
         logo.anchoredPosition = logoTargetPosition;
 
-        ChangeActivityToNext<MainMenuView>();
+        if (needsWelcome)
+        {
+            ChangeActivityToNext<WelcomeView>();
+        }
+        else
+        {
+            ChangeActivityToNext<MainMenuView>();
+        }
     }
 }
