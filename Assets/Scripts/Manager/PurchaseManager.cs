@@ -7,10 +7,13 @@ public class PurchaseManager : MonoBehaviour, IPurchaser
 {
     private int currentProductsCount;
 
-    [SerializeField]
-    private int fromAdsProductsCount;
-
-    public int FromAdsProductsCount { get { return fromAdsProductsCount; } }
+    public int FromAdsProductsCount
+    {
+        get
+        {
+            return SettingsManager.Instance.Settings.FromAdsProductsCount;
+        }
+    }
 
     public List<InAppProduct> GetProducts()
     {

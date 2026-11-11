@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b66f4493d8b24aa0a46e2a74427d88e4, type: 3}
+  m_Name: GlobalSettings
+  m_EditorClassIdentifier: Assembly-CSharp::GlobalSettings
+  startingHints: 3
+  soundEnabled: 1
+  musicEnabled: 1
+  language: 0
+  blockMovementSpeed: 16
+  stoppingDistance: 0.05
+  resultsDelay: 1
+  maximumSteps: 998
+  swipeThreshold: 60
+  fromAdsProductsCount: 3
+  storeProducts:
+  - productId: com.unity.50hints
+    purchaseType: 0
+    grantAmount: 50
+  - productId: com.unity.250hints
+    purchaseType: 0
+    grantAmount: 250
+  - productId: com.unity.1000hints
+    purchaseType: 0
+    grantAmount: 1000
+  - productId: com.unity.RemoveAds
+    purchaseType: 1
+    grantAmount: 0
+  cloudReconciliationLimit: 4

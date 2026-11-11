@@ -29829,7 +29829,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd3aa28948ce44649811db0b53f60f25, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PurchaseManager
-  fromAdsProductsCount: 3
 --- !u!4 &1449869133
 Transform:
   m_ObjectHideFlags: 0
@@ -45985,10 +45984,56 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b6d8b7f2e813e14a9b643ec9d960392, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShopItemPanel
+--- !u!1 &9120000001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9120000002}
+  - component: {fileID: 9120000003}
+  m_Layer: 0
+  m_Name: SettingsManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9120000002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9120000001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &9120000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9120000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6c7dce5ddaf9d942bc925cc33fe1295, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::SettingsManager
+  globalSettings: {fileID: 11400000, guid: b845d6716c004a028288767170c5e6db, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 9120000002}
   - {fileID: 1055026002}
   - {fileID: 1051869887}
   - {fileID: 1424546096}

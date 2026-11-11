@@ -11,20 +11,28 @@ namespace Zillneuron.Blockmates.Services.SignIn
     {
         public int HintsCount;
         public long HintsChangedAtUtcTicks;
-
+        
+        public static InventoryData CreateInitial()
+        {
+            GlobalSettings defaults = SettingsManager.Instance.Settings;
+            return new InventoryData()
+            {
+                HintsCount = defaults.StartingHints
+            };
+        }
         public static InventoryData Normalize(InventoryData source)
         {
             if (source == null)
             {
-                return new InventoryData();
+                return InventoryData.CreateInitial();
             }
 
             if (source.HintsCount < 0 || source.HintsChangedAtUtcTicks < 0)
             {
                 throw new FormatException("Invalid inventory data.");
             }
-
-            return new InventoryData
+            
+            return new InventoryData()
             {
                 HintsCount = source.HintsCount,
                 HintsChangedAtUtcTicks = source.HintsChangedAtUtcTicks
@@ -40,7 +48,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
 
         public static bool IsDefault(InventoryData value)
         {
-            return Same(value, new InventoryData());
+            return Same(value, InventoryData.CreateInitial());
         }
 
         public static InventoryData Merge(InventoryData left, InventoryData right)

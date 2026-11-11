@@ -86,7 +86,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
                 return new SettingsCloudSnapshot(data, item.WriteLock, true);
             }
 
-            return new SettingsCloudSnapshot(new SettingsData(), null, false);
+            return new SettingsCloudSnapshot(SettingsData.CreateInitial(), null, false);
         }
 
         public Task<string> UploadSettingsAsync(SettingsData data, SettingsCloudSnapshot baseline)
@@ -127,7 +127,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
 
                 return new InventoryCloudSnapshot(data, item.WriteLock, true);
             }
-            return new InventoryCloudSnapshot(new InventoryData(), null, false);
+            return new InventoryCloudSnapshot(InventoryData.CreateInitial(), null, false);
         }
 
         public Task<string> UploadInventoryAsync(InventoryData data, InventoryCloudSnapshot baseline)

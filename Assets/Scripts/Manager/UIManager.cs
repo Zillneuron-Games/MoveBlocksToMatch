@@ -60,7 +60,7 @@ public class UIManager : MonoBehaviour
         this.bestSteps = bestSteps;
         //this.bestCoins = bestCoins;
 
-        if (this.bestSteps < LevelStartData.MaximumStepsCount)
+        if (this.bestSteps < SettingsManager.Instance.Settings.MaximumSteps)
         {
 
         }

@@ -34,6 +34,13 @@ public class ShopDialog : ADialog
 
         for (int i = 1; i < shopItems.Length; i++)
         {
+            bool hasProduct = i - 1 < products.Count;
+            shopItems[i].gameObject.SetActive(hasProduct);
+            if (!hasProduct)
+            {
+                continue;
+            }
+
             Product product = products[i-1].ProductFromAppStore;
             shopItems[i].SetUp(product.definition.id, CleanLocalizedTitle(product.metadata.localizedTitle), product.metadata.localizedPriceString, purchaser);
         }

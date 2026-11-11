@@ -448,7 +448,7 @@ public class DoubleGame : AGame
             return;
         }
 
-        if (stepsCounter > LevelStartData.MaximumStepsCount)
+        if (stepsCounter > SettingsManager.Instance.Settings.MaximumSteps)
         {
             ThrowErrorEvent(EErrorType.StepsCount);
         }

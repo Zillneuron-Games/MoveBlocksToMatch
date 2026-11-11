@@ -9,19 +9,31 @@ namespace Zillneuron.Blockmates.Services.SignIn
     [Serializable]
     public sealed class SettingsData
     {
-        public bool SoundEnabled = true;
-        public bool MusicEnabled = true;
-        public int LanguageCode = 0;
+        // These defaults also decode legacy save records with missing fields.
+        public bool SoundEnabled;
+        public bool MusicEnabled;
+        public int LanguageCode;
 
         public long SoundChangedAtUtcTicks;
         public long MusicChangedAtUtcTicks;
         public long LanguageChangedAtUtcTicks;
 
+        public static SettingsData CreateInitial()
+        {
+            GlobalSettings defaults = SettingsManager.Instance.Settings;
+            return new SettingsData()
+            {
+                SoundEnabled = defaults.SoundEnabled,
+                MusicEnabled = defaults.MusicEnabled,
+                LanguageCode = (int)defaults.Language
+            };
+        }
+
         public static SettingsData Normalize(SettingsData source)
         {
             if (source == null)
             {
-                return new SettingsData();
+                return SettingsData.CreateInitial();
             }
 
             if (source.SoundChangedAtUtcTicks < 0 || source.MusicChangedAtUtcTicks < 0 || source.LanguageChangedAtUtcTicks < 0)
@@ -34,7 +46,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
                 throw new FormatException("Invalid language identifier.");
             }
 
-            return new SettingsData
+            return new SettingsData()
             {
                 SoundEnabled = source.SoundEnabled,
                 MusicEnabled = source.MusicEnabled,
@@ -60,7 +72,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
 
         public static bool IsDefault(SettingsData value)
         {
-            return Same(value, new SettingsData());
+            return Same(value, SettingsData.CreateInitial());
         }
 
         /// <summary>Merge each preference independently using local change timestamps.</summary>
@@ -97,7 +109,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
 
         private static bool PreferRight(long leftTime, long rightTime, int left, int right)
         {
-            return rightTime > leftTime || (rightTime == leftTime && right > left);
+            return rightTime > leftTime || (rightTime == leftTime && (leftTime == 0 || right > left));
         }
     }
 }

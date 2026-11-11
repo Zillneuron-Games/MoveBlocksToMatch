@@ -6,7 +6,6 @@ using Zillneuron.Blockmates.Services.SignIn;
 public class LevelStartData
 {
     public const int GamesCount = 105;
-    public const int MaximumStepsCount = 998;
 
     private int totalCoins;
     private int nextToLoadGameId;

@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Purchasing;
 using Zillneuron.InAppPurchase;
 
 [CreateAssetMenu(fileName = "InAppPurchaseSettings", menuName = "ScriptableObjects/InAppPurchaseSettings", order = 1)]
@@ -8,12 +7,13 @@ public class InAppPurchaseSettingsScriptableObject : AInAppPurchaseSettingsScrip
 {
     public override List<InAppProductMetadata> GetProducts()
     {
-        return new List<InAppProductMetadata>
+        IReadOnlyList<StoreProductSettings> catalog = SettingsManager.Instance.Settings.StoreProducts;
+        var products = new List<InAppProductMetadata>(catalog.Count);
+        foreach (StoreProductSettings product in catalog)
         {
-            new InAppProductMetadata("com.unity.50hints", ProductType.Consumable),
-            new InAppProductMetadata("com.unity.250hints", ProductType.Consumable),
-            new InAppProductMetadata("com.unity.1000hints", ProductType.Consumable),
-            new InAppProductMetadata("com.unity.RemoveAds", ProductType.NonConsumable)
-        };
+            products.Add(new InAppProductMetadata(product.ProductId, product.PurchaseType));
+        }
+
+        return products;
     }
 }

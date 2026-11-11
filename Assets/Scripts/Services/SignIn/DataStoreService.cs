@@ -65,7 +65,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
             string key = ActiveKey(SettingsPrefix);
             if (!PlayerPrefs.HasKey(key))
             {
-                return new SettingsData();
+                return SettingsData.CreateInitial();
             }
 
             string json = PlayerPrefs.GetString(key);
@@ -94,7 +94,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
             string key = ActiveKey(InventoryPrefix);
             if (!PlayerPrefs.HasKey(key))
             {
-                return new InventoryData();
+                return InventoryData.CreateInitial();
             }
 
             string json = PlayerPrefs.GetString(key);

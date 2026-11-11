@@ -106,7 +106,7 @@ public abstract class AGame
         this.playedNumber = playedNumber;
 
         this.backStepsCounter = 0;
-        this.backStepsMaximum = LevelStartData.MaximumStepsCount;
+        this.backStepsMaximum = SettingsManager.Instance.Settings.MaximumSteps;
 
         this.inscriptionBlockRed = inscriptionBlockRed;
         this.inscriptionBlockBlue = inscriptionBlockBlue;

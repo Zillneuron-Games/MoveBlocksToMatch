@@ -40,8 +40,8 @@
   <Project Path="Unity.VisualScripting.State.Editor.csproj" />
   <Project Path="Unity.Services.Core.Editor.csproj" />
   <Project Path="Unity.TestTools.CodeCoverage.Editor.csproj" />
-  <Project Path="Unity.LevelPlay.csproj" />
   <Project Path="Unity.Services.Core.csproj" />
+  <Project Path="Unity.LevelPlay.csproj" />
   <Project Path="Unity.Purchasing.LiveContentAdapterService.csproj" />
   <Project Path="Unity.VisualScripting.Flow.csproj" />
   <Project Path="Unity.Purchasing.Editor.Shared.csproj" />

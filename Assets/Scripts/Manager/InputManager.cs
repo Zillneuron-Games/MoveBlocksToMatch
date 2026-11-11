@@ -9,7 +9,6 @@ public class InputManager : MonoBehaviour
     private float TouchFirstPosY;
     private float TouchSecondPosX;
     private float TouchSecondPosY;
-    private float TouchDistance;
 
     private bool isActive;
 
@@ -32,7 +31,6 @@ public class InputManager : MonoBehaviour
     private void Start()
     {
         isActive = true;
-        TouchDistance = 60;
     }
 
     private void Update()
@@ -74,7 +72,8 @@ public class InputManager : MonoBehaviour
                 TouchSecondPosX = Input.GetTouch(0).position.x;
                 TouchSecondPosY = Input.GetTouch(0).position.y;
 
-                if (Mathf.Abs(TouchFirstPosX - TouchSecondPosX) > TouchDistance || Mathf.Abs(TouchFirstPosY - TouchSecondPosY) > TouchDistance)
+                float swipeThreshold = SettingsManager.Instance.Settings.SwipeThreshold;
+                if (Mathf.Abs(TouchFirstPosX - TouchSecondPosX) > swipeThreshold || Mathf.Abs(TouchFirstPosY - TouchSecondPosY) > swipeThreshold)
                 {
                     if (Mathf.Abs(TouchFirstPosX - TouchSecondPosX) > Mathf.Abs(TouchFirstPosY - TouchSecondPosY))
                     {

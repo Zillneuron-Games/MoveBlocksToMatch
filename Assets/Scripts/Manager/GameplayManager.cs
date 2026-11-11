@@ -23,9 +23,6 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
     #region Variables
 
-    private float gameEndPauseTime;
-    private float blocksMoveSpeed;
-    private float blocksMinDistance;
     private EDirection lastHint;
     private EErrorType lastError;
 
@@ -84,9 +81,6 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
     private IEnumerator LoadScene()
     {
         gameStartData = LevelStartData.CreateInstance();
-
-        blocksMoveSpeed = 16.0f;
-        blocksMinDistance = 0.05f;
 
         InputManager.Instance.eventInput += HandleInputEvent;
 
@@ -314,7 +308,8 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
     private void UpdateTransit()
     {
-        currentGame.MoveBlockObjects(Time.deltaTime * blocksMoveSpeed, blocksMinDistance);
+        GlobalSettings settings = SettingsManager.Instance.Settings;
+        currentGame.MoveBlockObjects(Time.deltaTime * settings.BlockMovementSpeed, settings.StoppingDistance);
     }
 
     private void UpdatePause()
@@ -430,8 +425,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
         UIManager.Instance.UpdateGameInfo(currentGame.StepsCount, currentGame.BestStepsCount, currentGame.CoinsCount/*, currentGame.BestCoinsCount*/);
 
-        Invoke("EndGame", gameEndPauseTime);
-        //Invoke("OnShowMenu", gameEndPauseTime);
+        Invoke(nameof(EndGame), SettingsManager.Instance.Settings.ResultsDelay);
     }
 
     private void HandleError(object sender, GameErrorEventArgs args)

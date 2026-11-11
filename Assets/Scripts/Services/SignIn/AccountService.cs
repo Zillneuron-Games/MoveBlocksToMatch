@@ -25,7 +25,6 @@ namespace Zillneuron.Blockmates.Services.SignIn
         private const string PendingPrefix = "account_pending_";
         private const string OfflineGuestId = "offline_guest_local_only";
         private const string NextLevelId = "account_nextGameId";
-        private const int MaxCloudAttempts = 4;
 
 
         public event Action<GameDataDynamic[]> OnLevelsChanged;
@@ -39,9 +38,9 @@ namespace Zillneuron.Blockmates.Services.SignIn
         private DataStoreService localStoreService;
         private DataSyncService cloudSyncService;
 
-        private GameDataDynamic[] levels = Array.Empty<GameDataDynamic>();
-        private SettingsData settings = new SettingsData();
-        private InventoryData inventory = new InventoryData();
+        private GameDataDynamic[] levels;
+        private SettingsData settings;
+        private InventoryData inventory;
         private bool ready;
         private bool startupInitialized;
         private bool hooked;
@@ -49,7 +48,6 @@ namespace Zillneuron.Blockmates.Services.SignIn
         private bool syncing;
         private bool startupSyncAttempted;
         private bool pauseSyncAttempted;
-
         public string PlayerId
         {
             get
@@ -57,7 +55,6 @@ namespace Zillneuron.Blockmates.Services.SignIn
                 return localStoreService.CurrentPlayerId;
             }
         }
-
         public bool IsReady
         {
             get
@@ -139,7 +136,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
         {
             get
             {
-                return SettingsData.Normalize(settings);
+                return ready ? SettingsData.Normalize(settings) : SettingsData.CreateInitial();
             }
         }
 
@@ -155,7 +152,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
         {
             get
             {
-                return settings.SoundEnabled;
+                return ready ? settings.SoundEnabled : SettingsManager.Instance.Settings.SoundEnabled;
             }
         }
 
@@ -163,7 +160,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
         {
             get
             {
-                return settings.MusicEnabled;
+                return ready ? settings.MusicEnabled : SettingsManager.Instance.Settings.MusicEnabled;
             }
         }
 
@@ -171,7 +168,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
         {
             get
             {
-                return (ELanguageCode)settings.LanguageCode;
+                return ready ? (ELanguageCode)settings.LanguageCode : SettingsManager.Instance.Settings.Language;
             }
         }
 
@@ -258,8 +255,8 @@ namespace Zillneuron.Blockmates.Services.SignIn
                     // Crucial: do NOT create a guest before the welcome choice.
                     localStoreService.SelectAccount(null);
                     levels = Array.Empty<GameDataDynamic>();
-                    settings = new SettingsData();
-                    inventory = new InventoryData();
+                    settings = SettingsData.CreateInitial();
+                    inventory = InventoryData.CreateInitial();
                     ready = false;
                 }
 
@@ -364,7 +361,10 @@ namespace Zillneuron.Blockmates.Services.SignIn
                 // does not need a destructive-change dialog. Meaningful guest
                 // data always requires the caller-provided confirmation.
                 Func<Task<bool>> confirmation = confirmReplaceGuestProgress;
-                if (IsGuest && levels.Length == 0 && SettingsData.IsDefault(settings) && InventoryData.IsDefault(inventory))
+                if (IsGuest && levels.Length == 0 &&
+                    SettingsData.Same(settings, SettingsData.CreateInitial()) &&
+                    inventory.HintsChangedAtUtcTicks == 0 &&
+                    inventory.HintsCount == SettingsManager.Instance.Settings.StartingHints)
                 {
                     confirmation = () =>
                     {
@@ -682,7 +682,8 @@ namespace Zillneuron.Blockmates.Services.SignIn
 
                 string identity = PlayerId;
 
-                for (int attempt = 0; attempt < MaxCloudAttempts; attempt++)
+                int reconciliationLimit = SettingsManager.Instance.Settings.CloudReconciliationLimit;
+                for (int attempt = 0; attempt < reconciliationLimit; attempt++)
                 {
                     // 1. Level progress: keep the best valid sequential progress.
                     LevelsCloudSnapshot levelCloud = await cloudSyncService.DownloadAsync();
@@ -703,8 +704,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
                         {
                             await cloudSyncService.UploadAsync(sendingLevels, levelCloud);
                         }
-                        catch (CloudSaveException error) when (
-                            string.Equals(error.Reason.ToString(), "Conflict", StringComparison.Ordinal))
+                        catch (CloudSaveException error) when (string.Equals(error.Reason.ToString(), "Conflict", StringComparison.Ordinal))
                         {
                             continue;
                         }
@@ -716,10 +716,13 @@ namespace Zillneuron.Blockmates.Services.SignIn
 
                     RequireSameCloudIdentity(identity);
 
-                    SettingsData mergedSettings = SettingsData.Merge(settings, settingsCloud.Data);
-                    if (!SettingsData.Same(settings, mergedSettings))
+                    if (settingsCloud.Exists)
                     {
-                        PersistSettings(mergedSettings);
+                        SettingsData mergedSettings = SettingsData.Merge(settings, settingsCloud.Data);
+                        if (!SettingsData.Same(settings, mergedSettings))
+                        {
+                            PersistSettings(mergedSettings);
+                        }
                     }
 
                     SettingsData sendingSettings = Settings;
@@ -742,10 +745,16 @@ namespace Zillneuron.Blockmates.Services.SignIn
                     // 3. Inventory: independent last-change-wins hint balance.
                     InventoryCloudSnapshot inventoryCloud = await cloudSyncService.DownloadInventoryAsync();
                     RequireSameCloudIdentity(identity);
-                    InventoryData mergedInventory = InventoryData.Merge(inventory, inventoryCloud.Data);
-                    if (!InventoryData.Same(inventory, mergedInventory))
+                    if (inventoryCloud.Exists)
                     {
-                        PersistInventory(mergedInventory);
+                        // An existing cloud balance takes precedence over an untouched starter grant.
+                        InventoryData mergedInventory = inventory.HintsChangedAtUtcTicks == 0
+                            ? inventoryCloud.Data
+                            : InventoryData.Merge(inventory, inventoryCloud.Data);
+                        if (!InventoryData.Same(inventory, mergedInventory))
+                        {
+                            PersistInventory(mergedInventory);
+                        }
                     }
 
                     InventoryData sendingInventory = Inventory;
@@ -757,8 +766,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
                         {
                             await cloudSyncService.UploadInventoryAsync(sendingInventory, inventoryCloud);
                         }
-                        catch (CloudSaveException error) when (
-                            string.Equals(error.Reason.ToString(), "Conflict", StringComparison.Ordinal))
+                        catch (CloudSaveException error) when (string.Equals(error.Reason.ToString(), "Conflict", StringComparison.Ordinal))
                         {
                             continue;
                         }
@@ -868,9 +876,10 @@ namespace Zillneuron.Blockmates.Services.SignIn
 
                 localStoreService.SelectAccount(null);
                 levels = Array.Empty<GameDataDynamic>();
-                settings = new SettingsData();
-                inventory = new InventoryData();
+                settings = SettingsData.CreateInitial();
+                inventory = InventoryData.CreateInitial();
                 ready = false;
+
                 PlayerPrefs.DeleteKey(LastAccountKey);
                 PlayerPrefs.DeleteKey(LastWasGuestKey);
                 PlayerPrefs.Save();
@@ -927,6 +936,8 @@ namespace Zillneuron.Blockmates.Services.SignIn
 
             localStoreService.SelectAccount(nextId);
 
+            bool hasSettings = localStoreService.HasSettings(nextId);
+            bool initializeInventory = different && lastId != OfflineGuestId && !localStoreService.HasSave(nextId) && !hasSettings && !localStoreService.HasInventory(nextId);
             GameDataDynamic[] destination = localStoreService.Load();
             SettingsData settingsDestination = localStoreService.LoadSettings();
             InventoryData inventoryDestination = localStoreService.LoadInventory();
@@ -950,6 +961,21 @@ namespace Zillneuron.Blockmates.Services.SignIn
                 inventoryDestination = InventoryData.Merge(inventoryDestination, offlineInventoryToMigrate);
                 localStoreService.SaveInventory(inventoryDestination);
                 MarkPending(nextId, true);
+            }
+            else if (initializeInventory)
+            {
+                inventoryDestination.HintsCount = SettingsManager.Instance.Settings.StartingHints;
+                if (!InventoryData.IsDefault(inventoryDestination))
+                {
+                    SetPending(nextId, true);
+                }
+
+                localStoreService.SaveInventory(inventoryDestination);
+            }
+
+            if (!hasSettings && offlineSettingsToMigrate == null)
+            {
+                SaveInitialSettings(settingsDestination);
             }
 
             // Guest -> existing account: NEVER import guest progress into destination.
@@ -986,6 +1012,11 @@ namespace Zillneuron.Blockmates.Services.SignIn
             localStoreService.SelectAccount(id);
             levels = localStoreService.Load();
             settings = localStoreService.LoadSettings();
+            if (!localStoreService.HasSettings(id))
+            {
+                SaveInitialSettings(settings);
+            }
+
             inventory = localStoreService.LoadInventory();
             ready = true;
             
@@ -995,6 +1026,16 @@ namespace Zillneuron.Blockmates.Services.SignIn
             OnLevelsChanged?.Invoke(Levels);
             OnSettingsChanged?.Invoke(Settings);
             OnInventoryChanged?.Invoke(Inventory);
+        }
+
+        private void SaveInitialSettings(SettingsData data)
+        {
+            if (!SettingsData.IsDefault(data))
+            {
+                SetPending(localStoreService.CurrentPlayerId, true);
+            }
+
+            localStoreService.SaveSettings(data);
         }
 
         // DataStoreService flushes the record and its pending flag together.
@@ -1119,7 +1160,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
             // Mobile suspension can interrupt the request. Local saves and the
             // pending flag let the next launch retry without waiting on shutdown.
             pauseSyncAttempted = true;
-            _ = SyncAsync(pendingOnly: true);
+            Task<bool> result = SyncAsync(pendingOnly: true);
         }
     }
 }
