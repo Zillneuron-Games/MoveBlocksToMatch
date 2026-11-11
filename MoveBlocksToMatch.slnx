@@ -5,12 +5,14 @@
   <Project Path="Unity.Purchasing.csproj" />
   <Project Path="Unity.Services.Core.Internal.csproj" />
   <Project Path="Unity.Services.Authentication.PlayerAccounts.csproj" />
+  <Project Path="Unity.Pipeline.csproj" />
   <Project Path="Unity.Services.CloudSave.csproj" />
   <Project Path="Unity.ShaderGraph.Editor.csproj" />
   <Project Path="Unity.Purchasing.PaymentProviderService.csproj" />
   <Project Path="Unity.RenderPipelines.Core.Runtime.csproj" />
   <Project Path="Unity.Timeline.Editor.csproj" />
   <Project Path="Unity.RenderPipelines.Core.Editor.csproj" />
+  <Project Path="Unity.Pipeline.IlInterpreter.csproj" />
   <Project Path="Unity.Collections.csproj" />
   <Project Path="Unity.RenderPipelines.Universal.2D.Runtime.csproj" />
   <Project Path="UnityEngine.UI.csproj" />
@@ -22,9 +24,11 @@
   <Project Path="UnityEngine.TestRunner.csproj" />
   <Project Path="Unity.Services.Core.Environments.Editor.csproj" />
   <Project Path="Unity.VisualScripting.Flow.Editor.csproj" />
+  <Project Path="Unity.Pipeline.Editor.csproj" />
   <Project Path="Unity.VisualStudio.Editor.csproj" />
   <Project Path="Unity.Services.Authentication.csproj" />
   <Project Path="Zillneuron.Web.Runtime.csproj" />
+  <Project Path="Unity.Pipeline.Attributes.csproj" />
   <Project Path="Unity.LevelPlay.Editor.csproj" />
   <Project Path="Unity.Services.Authentication.Editor.csproj" />
   <Project Path="Unity.Purchasing.Stores.csproj" />
@@ -98,6 +102,7 @@
   <Project Path="IAPResolver.csproj" />
   <Project Path="Unity.RenderPipeline.Universal.ShaderLibrary.csproj" />
   <Project Path="Unity.InternalAPIEngineBridge.ObjectDispatcher.Runtime.csproj" />
+  <Project Path="Unity.Pipeline.CodeGen.csproj" />
   <Project Path="Unity.Services.Core.Registration.csproj" />
   <Project Path="Unity.InternalAPIEngineBridge.RenderPipelines.Core.Editor.csproj" />
   <Project Path="Unity.InternalAPIEngineBridge.004.csproj" />
