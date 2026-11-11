@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Zillneuron.UILayout;
+using Zillneuron.Blockmates.Services.SignIn;
 
 public class SettingsDialog : ADialog
 {

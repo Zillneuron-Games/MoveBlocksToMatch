@@ -1,15 +1,28 @@
-using UnityEngine;
-
-public class InventoryCloudSnapshot
+namespace Zillneuron.Blockmates.Services.SignIn
 {
-    public InventoryData Data { get; }
-    public string WriteLock { get; }
-    public bool Exists { get; }
-
-    public InventoryCloudSnapshot(InventoryData data, string writeLock, bool exists)
+    /// <summary>Inventory and the write lock returned by Cloud Save.</summary>
+    public class InventoryCloudSnapshot
     {
-        Data = InventoryData.Normalize(data);
-        WriteLock = writeLock;
-        Exists = exists;
+        public InventoryData Data
+        {
+            get;
+        }
+
+        public string WriteLock
+        {
+            get;
+        }
+
+        public bool Exists
+        {
+            get;
+        }
+
+        public InventoryCloudSnapshot(InventoryData data, string writeLock, bool exists)
+        {
+            Data = InventoryData.Normalize(data);
+            WriteLock = writeLock;
+            Exists = exists;
+        }
     }
 }

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using Zillneuron.UILayout;
+using Zillneuron.Blockmates.Services.SignIn;
 
 public class WelcomeView : ACompleteView
 {

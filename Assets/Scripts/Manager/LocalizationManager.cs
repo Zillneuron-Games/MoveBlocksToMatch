@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
 using Zillneuron.Utilities;
+using Zillneuron.Blockmates.Services.SignIn;
 
 public class LocalizationManager : MonoSingleton<LocalizationManager>
 {

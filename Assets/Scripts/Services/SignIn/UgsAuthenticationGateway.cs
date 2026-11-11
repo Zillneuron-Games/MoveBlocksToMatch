@@ -2,55 +2,105 @@ using System.Threading.Tasks;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
 
-/// <summary>All direct Unity Authentication SDK calls live here.</summary>
-public sealed class UgsAuthenticationGateway : IGameAuthentication
+namespace Zillneuron.Blockmates.Services.SignIn
 {
-    private bool _hasUnityIdentity;
-
-    public string PlayerId => AuthenticationService.Instance.PlayerId;
-    public bool IsSignedIn => AuthenticationService.Instance.IsSignedIn;
-    public bool IsAuthorized => AuthenticationService.Instance.IsAuthorized;
-    public bool HasUnityIdentity => _hasUnityIdentity;
-    public bool HasCachedSessionToken => AuthenticationService.Instance.SessionTokenExists;
-
-    public Task InitializeAsync() => UnityServices.InitializeAsync();
-
-    public async Task SignInCachedOrGuestAsync()
+    /// <summary>All direct Unity Authentication SDK calls live here.</summary>
+    public sealed class UgsAuthenticationGateway : IGameAuthentication
     {
-        bool wasCached = AuthenticationService.Instance.SessionTokenExists;
-        await AuthenticationService.Instance.SignInAnonymouslyAsync();
-        if (!wasCached) _hasUnityIdentity = false;
-    }
+        private bool hasUnityIdentity;
 
-    public async Task RefreshPlayerIdentityAsync()
-    {
-        var info = await AuthenticationService.Instance.GetPlayerInfoAsync();
-        _hasUnityIdentity = info != null && info.GetUnityId() != null;
-    }
+        public string PlayerId
+        {
+            get
+            {
+                return AuthenticationService.Instance.PlayerId;
+            }
+        }
 
-    public async Task LinkToUnityAsync(string accessToken)
-    {
-        await AuthenticationService.Instance.LinkWithUnityAsync(accessToken);
-        _hasUnityIdentity = true;
-    }
+        public bool IsSignedIn
+        {
+            get
+            {
+                return AuthenticationService.Instance.IsSignedIn;
+            }
+        }
 
-    public Task SignInExistingUnityAsync(string accessToken) =>
-        SignInUnityAsync(accessToken, createAccount: false);
+        public bool IsAuthorized
+        {
+            get
+            {
+                return AuthenticationService.Instance.IsAuthorized;
+            }
+        }
 
-    public async Task SignInUnityAsync(string accessToken, bool createAccount)
-    {
-        await AuthenticationService.Instance.SignInWithUnityAsync(
-            accessToken, new SignInOptions { CreateAccount = createAccount });
-        _hasUnityIdentity = true;
-    }
+        public bool HasUnityIdentity
+        {
+            get
+            {
+                return hasUnityIdentity;
+            }
+        }
 
-    public void SignOut(bool clearSessionToken)
-    {
-        var auth = AuthenticationService.Instance;
-        if (auth.IsSignedIn)
-            auth.SignOut(clearSessionToken);
-        else if (clearSessionToken && auth.SessionTokenExists)
-            auth.ClearSessionToken();
-        _hasUnityIdentity = false;
+        public bool HasCachedSessionToken
+        {
+            get
+            {
+                return AuthenticationService.Instance.SessionTokenExists;
+            }
+        }
+
+        public Task InitializeAsync()
+        {
+            return UnityServices.InitializeAsync();
+        }
+
+        public async Task SignInCachedOrGuestAsync()
+        {
+            bool wasCached = AuthenticationService.Instance.SessionTokenExists;
+            await AuthenticationService.Instance.SignInAnonymouslyAsync();
+            
+            if (!wasCached)
+            {
+                hasUnityIdentity = false;
+            }
+        }
+
+        public async Task RefreshPlayerIdentityAsync()
+        {
+            var info = await AuthenticationService.Instance.GetPlayerInfoAsync();
+            hasUnityIdentity = info != null && info.GetUnityId() != null;
+        }
+
+        public async Task LinkToUnityAsync(string accessToken)
+        {
+            await AuthenticationService.Instance.LinkWithUnityAsync(accessToken);
+            hasUnityIdentity = true;
+        }
+
+        public Task SignInExistingUnityAsync(string accessToken)
+        {
+            return SignInUnityAsync(accessToken, createAccount: false);
+        }
+
+        public async Task SignInUnityAsync(string accessToken, bool createAccount)
+        {
+            await AuthenticationService.Instance.SignInWithUnityAsync(accessToken, new SignInOptions { CreateAccount = createAccount });
+            hasUnityIdentity = true;
+        }
+
+        public void SignOut(bool clearSessionToken)
+        {
+            var auth = AuthenticationService.Instance;
+            if (auth.IsSignedIn)
+            {
+                auth.SignOut(clearSessionToken);
+            }
+            else if (clearSessionToken && auth.SessionTokenExists)
+            {
+                auth.ClearSessionToken();
+            }
+
+            hasUnityIdentity = false;
+        }
     }
 }

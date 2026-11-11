@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using Zillneuron.UILayout;
+using Zillneuron.Blockmates.Services.SignIn;
 
 public class LoadingView : StartView
 {
