@@ -47,6 +47,8 @@ namespace Zillneuron.Blockmates.Services.SignIn
         private bool hooked;
         private bool changingAccount;
         private bool syncing;
+        private bool startupSyncAttempted;
+        private bool pauseSyncAttempted;
 
         public string PlayerId
         {
@@ -197,6 +199,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
         public void SetNextGameId(int gameId)
         {
             PlayerPrefs.SetInt(NextLevelId, gameId);
+            PlayerPrefs.Save();
         }
 
         /// <summary>
@@ -210,6 +213,9 @@ namespace Zillneuron.Blockmates.Services.SignIn
             changingAccount = true;
             try
             {
+                signInService = SignInService.Instance;
+                localStoreService = DataStoreService.Instance;
+                cloudSyncService = DataSyncService.Instance;
                 HookSignInOnce();
                 if (signInService.HasPendingLocalAccountChange)
                 {
@@ -264,9 +270,12 @@ namespace Zillneuron.Blockmates.Services.SignIn
                 changingAccount = false;
                 operationGate.Release();
             }
-            if (IsCloudAvailable)
+
+            // Reconcile before the loading view reads the selected player's settings.
+            if (!startupSyncAttempted && IsCloudAvailable)
             {
-                RequestSync();
+                startupSyncAttempted = true;
+                await SyncAsync();
             }
         }
 
@@ -318,11 +327,6 @@ namespace Zillneuron.Blockmates.Services.SignIn
             {
                 changingAccount = false;
                 operationGate.Release();
-            }
-
-            if (IsCloudAvailable)
-            {
-                RequestSync();
             }
         }
 
@@ -379,12 +383,13 @@ namespace Zillneuron.Blockmates.Services.SignIn
             // Await the first sync so an existing account's cloud levels/settings/
             // inventory are loaded BEFORE the UI navigates to Home. Failure does
             // not erase the local save and SyncAsync reports it via its event.
-            if (result == LoginOutcome.SignedIn || result == LoginOutcome.GuestLinked || result == LoginOutcome.SwitchedToExisting)
+            if (result == LoginOutcome.SignedIn || result == LoginOutcome.SwitchedToExisting)
             {
-                if (!await SyncAsync())
-                {
-                    MarkPending(PlayerId, true); // Retry on a later sync/launch.
-                }
+                await SyncAsync();
+            }
+            else if (result == LoginOutcome.GuestLinked)
+            {
+                await SyncAsync(pendingOnly: true);
             }
             return result;
         }
@@ -406,7 +411,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
             // Unsynced changes remain stored under the old linked Player ID.
             if (IsCloudAvailable && HasPendingUpload)
             {
-                await SyncAsync();
+                await SyncAsync(pendingOnly: true);
             }
 
             await operationGate.WaitAsync();
@@ -439,18 +444,13 @@ namespace Zillneuron.Blockmates.Services.SignIn
                 changingAccount = false;
                 operationGate.Release();
             }
-            if (IsCloudAvailable)
-            {
-                RequestSync();
-            }
         }
 
         public void RecordAttempt(int levelId, int steps = 0)
         {
             RequirePlayable();
             GameDataDynamic[] updated = ProgressRules.RecordAttempt(levels, levelId, steps);
-            PersistCurrent(updated, markPending: true);
-            RequestSync();
+            PersistCurrent(updated);
         }
 
         // Unused by the current project.
@@ -470,8 +470,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
             SettingsData updated = Settings;
             updated.SoundEnabled = enabled;
             updated.SoundChangedAtUtcTicks = SettingsData.NextTimestamp(updated.SoundChangedAtUtcTicks);
-            PersistSettings(updated, markPending: true);
-            RequestSync();
+            PersistSettings(updated);
         }
 
         public void SetMusicEnabled(bool enabled)
@@ -486,8 +485,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
             updated.MusicEnabled = enabled;
             updated.MusicChangedAtUtcTicks = SettingsData.NextTimestamp(updated.MusicChangedAtUtcTicks);
             
-            PersistSettings(updated, markPending: true);
-            RequestSync();
+            PersistSettings(updated);
         }
 
         public void SetLanguage(ELanguageCode language)
@@ -497,8 +495,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
             SettingsData updated = Settings;
             updated.LanguageCode = (int)language;
             updated.LanguageChangedAtUtcTicks = SettingsData.NextTimestamp(updated.LanguageChangedAtUtcTicks);
-            PersistSettings(updated, markPending: true);
-            RequestSync();
+            PersistSettings(updated);
         }
 
         public void SetHints(int value)
@@ -518,8 +515,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
             InventoryData updated = Inventory;
             updated.HintsCount = value;
             updated.HintsChangedAtUtcTicks = InventoryData.NextTimestamp(updated.HintsChangedAtUtcTicks);
-            PersistInventory(updated, markPending: true);
-            RequestSync();
+            PersistInventory(updated);
         }
 
 
@@ -575,7 +571,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
                 changingAccount = false;
                 operationGate.Release();
             }
-            RequestSync();
+            await SyncAsync(pendingOnly: true);
         }
 
 
@@ -605,7 +601,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
             }
             if (changed)
             {
-                RequestSync();
+                await SyncAsync();
             }
 
             return changed;
@@ -654,10 +650,6 @@ namespace Zillneuron.Blockmates.Services.SignIn
                 changingAccount = false;
                 operationGate.Release();
             }
-            if (IsCloudAvailable)
-            {
-                RequestSync();
-            }
         }
 
         /// <summary>
@@ -665,7 +657,12 @@ namespace Zillneuron.Blockmates.Services.SignIn
         /// Each record uses its own Cloud Save write lock. All three are verified
         /// before the account's pending-upload flag is cleared.
         /// </summary>
-        public async Task<bool> SyncAsync()
+        public Task<bool> SyncAsync()
+        {
+            return SyncAsync(pendingOnly: false);
+        }
+
+        private async Task<bool> SyncAsync(bool pendingOnly)
         {
             await operationGate.WaitAsync();
 
@@ -676,6 +673,11 @@ namespace Zillneuron.Blockmates.Services.SignIn
                 if (!IsCloudAvailable)
                 {
                     return false;
+                }
+
+                if (pendingOnly && !HasPendingUpload)
+                {
+                    return true;
                 }
 
                 string identity = PlayerId;
@@ -689,7 +691,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
                     
                     if (!ProgressRules.Same(levels, mergedLevels))
                     {
-                        PersistCurrent(mergedLevels, markPending: true);
+                        PersistCurrent(mergedLevels);
                     }
 
                     GameDataDynamic[] sendingLevels = ProgressRules.Clone(levels);
@@ -717,7 +719,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
                     SettingsData mergedSettings = SettingsData.Merge(settings, settingsCloud.Data);
                     if (!SettingsData.Same(settings, mergedSettings))
                     {
-                        PersistSettings(mergedSettings, markPending: true);
+                        PersistSettings(mergedSettings);
                     }
 
                     SettingsData sendingSettings = Settings;
@@ -743,7 +745,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
                     InventoryData mergedInventory = InventoryData.Merge(inventory, inventoryCloud.Data);
                     if (!InventoryData.Same(inventory, mergedInventory))
                     {
-                        PersistInventory(mergedInventory, markPending: true);
+                        PersistInventory(mergedInventory);
                     }
 
                     InventoryData sendingInventory = Inventory;
@@ -768,7 +770,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
                     LevelsCloudSnapshot checkedLevels = await cloudSyncService.DownloadAsync();
                     RequireSameCloudIdentity(identity);
                     bool levelsMatch = checkedLevels.Exists ? ProgressRules.Same(checkedLevels.Levels, sendingLevels) : sendingLevels.Length == 0;
-                    if (!levelsMatch || !ProgressRules.Same(levels, sendingLevels))
+                    if (!levelsMatch)
                     {
                         continue;
                     }
@@ -776,7 +778,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
                     SettingsCloudSnapshot checkedSettings = await cloudSyncService.DownloadSettingsAsync();
                     RequireSameCloudIdentity(identity);
                     bool settingsMatch = checkedSettings.Exists ? SettingsData.Same(checkedSettings.Data, sendingSettings) : SettingsData.IsDefault(sendingSettings) && SettingsData.IsDefault(checkedSettings.Data);
-                    if (!settingsMatch || !SettingsData.Same(settings, sendingSettings))
+                    if (!settingsMatch)
                     {
                         continue;
                     }
@@ -784,9 +786,18 @@ namespace Zillneuron.Blockmates.Services.SignIn
                     InventoryCloudSnapshot checkedInventory = await cloudSyncService.DownloadInventoryAsync();
                     RequireSameCloudIdentity(identity);
                     bool inventoryMatch = checkedInventory.Exists ? InventoryData.Same(checkedInventory.Data, sendingInventory) : InventoryData.IsDefault(sendingInventory) && InventoryData.IsDefault(checkedInventory.Data);
-                    if (!inventoryMatch || !InventoryData.Same(inventory, sendingInventory))
+                    if (!inventoryMatch)
                     {
                         continue;
+                    }
+
+                    // Gameplay can save while network requests are in flight.
+                    // Leave newer edits pending for the next checkpoint.
+                    if (!ProgressRules.Same(levels, sendingLevels) ||
+                        !SettingsData.Same(settings, sendingSettings) ||
+                        !InventoryData.Same(inventory, sendingInventory))
+                    {
+                        return false;
                     }
 
                     MarkPending(identity, false);
@@ -986,45 +997,32 @@ namespace Zillneuron.Blockmates.Services.SignIn
             OnInventoryChanged?.Invoke(Inventory);
         }
 
-        private void PersistCurrent(GameDataDynamic[] levels, bool markPending)
+        // DataStoreService flushes the record and its pending flag together.
+        private void PersistCurrent(GameDataDynamic[] levels)
         {
-            localStoreService.Save(levels); // persist first; never advertise a save that failed
+            SetPending(PlayerId, true);
+            localStoreService.Save(levels);
             this.levels = ProgressRules.Clone(levels);
-            
-            if (markPending)
-            {
-                MarkPending(PlayerId, true);
-            }
 
             OnLevelsChanged?.Invoke(Levels);
         }
 
-        private void PersistSettings(SettingsData data, bool markPending)
+        private void PersistSettings(SettingsData data)
         {
             SettingsData clean = SettingsData.Normalize(data);
-            
+            SetPending(PlayerId, true);
             localStoreService.SaveSettings(clean);
             settings = clean;
-            
-            if (markPending)
-            {
-                MarkPending(PlayerId, true);
-            }
 
             OnSettingsChanged?.Invoke(Settings);
         }
 
-        private void PersistInventory(InventoryData data, bool markPending)
+        private void PersistInventory(InventoryData data)
         {
             InventoryData clean = InventoryData.Normalize(data);
-            
+            SetPending(PlayerId, true);
             localStoreService.SaveInventory(clean);
             inventory = clean;
-            
-            if (markPending)
-            {
-                MarkPending(PlayerId, true);
-            }
 
             OnInventoryChanged?.Invoke(Inventory);
         }
@@ -1046,6 +1044,12 @@ namespace Zillneuron.Blockmates.Services.SignIn
 
         private static void MarkPending(string id, bool pending)
         {
+            SetPending(id, pending);
+            PlayerPrefs.Save();
+        }
+
+        private static void SetPending(string id, bool pending)
+        {
             if (string.IsNullOrEmpty(id))
             {
                 return;
@@ -1059,8 +1063,6 @@ namespace Zillneuron.Blockmates.Services.SignIn
             {
                 PlayerPrefs.DeleteKey(PendingKey(id));
             }
-
-            PlayerPrefs.Save();
         }
 
         private static string PendingKey(string id)
@@ -1107,12 +1109,17 @@ namespace Zillneuron.Blockmates.Services.SignIn
             }
         }
 
-        private void RequestSync()
+        private void OnApplicationPause(bool paused)
         {
-            if (IsCloudAvailable && !syncing)
+            if (!paused || pauseSyncAttempted || syncing || !IsCloudAvailable || !HasPendingUpload)
             {
-                Task<bool> result = SyncAsync(); // SyncAsync handles and reports service exceptions.
+                return;
             }
+
+            // Mobile suspension can interrupt the request. Local saves and the
+            // pending flag let the next launch retry without waiting on shutdown.
+            pauseSyncAttempted = true;
+            _ = SyncAsync(pendingOnly: true);
         }
     }
 }
