@@ -23,7 +23,7 @@ public class GameDataDynamic
 
     public void UpdateBestStep(int bestAttempt)
     {
-        if (bestAttempt < BestAttempt)
+        if (bestAttempt > 0 && (BestAttempt == 0 || bestAttempt < BestAttempt))
         {
             BestAttempt = bestAttempt;
         }

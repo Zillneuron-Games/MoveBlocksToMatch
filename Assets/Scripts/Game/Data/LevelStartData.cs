@@ -5,8 +5,7 @@ using Zillneuron.Blockmates.Services.SignIn;
 
 public class LevelStartData
 {
-    public const int GamesCount = 105;
-
+    private int levelsCount;
     private int totalCoins;
     private int nextToLoadGameId;
     private int lastGame;
@@ -19,8 +18,10 @@ public class LevelStartData
         get { return nextToLoadGameId; }
         set
         {
-            if (value >= 1 && value <= GamesCount)
+            if (value >= 1 && value <= levelsCount)
+            {
                 nextToLoadGameId = value;
+            }
         }
     }
     public int LastGame => lastGame;
@@ -29,22 +30,25 @@ public class LevelStartData
 
     public static LevelStartData CreateInstance()
     {
-        int nextGameId = AccountService.Instance.NextLevel;
-        LevelData[] gameData = new LevelData[GamesCount];
-        GameDataDynamic[] gameDataDynamic = new GameDataDynamic[GamesCount];
+        GlobalSettings settings = SettingsManager.Instance.Settings;
+        int levelsCount = settings.LevelsCount;
+        AccountService account = AccountService.Instance;
+        int nextGameId = account.NextLevel;
+        LevelData[] gameData = new LevelData[levelsCount];
+        GameDataDynamic[] gameDataDynamic = account.Levels;
 
-        for (int i = 0; i < GamesCount; i++)
+        for (int i = 0; i < levelsCount; i++)
         {
             gameData[i] = LevelDataReader.GetGameData(i + 1);
-            gameDataDynamic[i] = AccountService.Instance.GetLevelData(i + 1);
         }
-        return new LevelStartData(nextGameId, gameData, gameDataDynamic);
+        return new LevelStartData(levelsCount, nextGameId, gameData, gameDataDynamic);
     }
 
-    public LevelStartData(int nextGameId, LevelData[] gamesData, GameDataDynamic[] gamesDataDynamic)
+    public LevelStartData(int levelsCount, int nextGameId, LevelData[] gamesData, GameDataDynamic[] gamesDataDynamic)
     {
+        this.levelsCount = levelsCount;
         this.totalCoins = 0;
-        this.nextToLoadGameId = 1;
+        this.NextToLoadGame = nextGameId;
         this.lastGame = 0;
         this.gamesData = gamesData;
         this.gamesDataDynamic = gamesDataDynamic;
@@ -56,16 +60,11 @@ public class LevelStartData
 
     public void UpdateDynamicData(GameDataDynamic gameDataDynamic)
     {
-        //if (gamesDataDynamic[gameDataDynamic.Id - 1].BestCoins < gameDataDynamic.BestCoins)
-        //{
-        //    totalCoins = totalCoins + gameDataDynamic.BestCoins - gamesDataDynamic[gameDataDynamic.Id - 1].BestCoins;
-        //}
-
         gamesDataDynamic[gameDataDynamic.Id - 1] = gameDataDynamic;
 
         AccountService.Instance.RecordAttempt(gameDataDynamic.Id, gameDataDynamic.BestAttempt);
 
-        if (gameDataDynamic.Id < GamesCount)
+        if (gameDataDynamic.Id < levelsCount)
         {
             GameDataDynamic nextGameDataDynamic = gamesDataDynamic[gameDataDynamic.Id];
 
@@ -73,9 +72,7 @@ public class LevelStartData
 
             if (nextGameDataDynamic.NumberOfGamesPlayed == 0)
             {                
-                nextGameDataDynamic.NumberOfGamesPlayed = 1;
                 lastGame = nextGameDataDynamic.Id;
-                AccountService.Instance.RecordAttempt(nextGameDataDynamic.Id, nextGameDataDynamic.BestAttempt);
             }
         }
     }

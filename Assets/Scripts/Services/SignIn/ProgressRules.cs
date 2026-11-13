@@ -5,20 +5,20 @@ namespace Zillneuron.Blockmates.Services.SignIn
 {
     /// <summary>
     /// Rules for GameDataDynamic[]: levels are 1-based, sequential and gap-free.
-    /// BestAttempt == 0 means the level has not yet been completed.
+    /// Zero and int.MaxValue are both uncompleted scores.
     /// No extra last-unlocked-level field is stored: it is derived from the array.
     /// </summary>
     public static class ProgressRules
     {
         public static GameDataDynamic[] Normalize(GameDataDynamic[] source)
         {
-            if (source == null || source.Length == 0)
-            {
-                return Array.Empty<GameDataDynamic>();
-            }
+            return Normalize(source, 0);
+        }
 
+        public static GameDataDynamic[] Normalize(GameDataDynamic[] source, int minimumLevelCount)
+        {
             var byId = new SortedDictionary<int, GameDataDynamic>();
-            foreach (GameDataDynamic entry in source)
+            foreach (GameDataDynamic entry in source ?? Array.Empty<GameDataDynamic>())
             {
                 if (entry == null || entry.Id < 1 || entry.BestAttempt < 0 || entry.NumberOfGamesPlayed < 0)
                 {
@@ -36,7 +36,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
                 }
             }
 
-            var result = new List<GameDataDynamic>(byId.Count);
+            var result = new List<GameDataDynamic>(Math.Max(byId.Count, minimumLevelCount));
             int expectedId = 1;
             bool foundIncomplete = false;
 
@@ -47,34 +47,71 @@ namespace Zillneuron.Blockmates.Services.SignIn
                     throw new FormatException("Level data contains a gap in sequential progression.");
                 }
 
-                if (foundIncomplete)
+                bool hasActivity = value.BestAttempt != 0 || value.NumberOfGamesPlayed != 0;
+                if (foundIncomplete && hasActivity)
                 {
                     throw new FormatException("No level may follow an uncompleted level.");
                 }
 
-                if (value.BestAttempt > 0 && value.NumberOfGamesPlayed == 0)
+                if (value.BestAttempt == int.MaxValue && value.Id != 1 ||
+                    value.BestAttempt > 0 && value.NumberOfGamesPlayed == 0)
                 {
-                    throw new FormatException("Completed levels must have been played at least once.");
+                    throw new FormatException("Invalid best attempt for this level.");
                 }
 
-                if (value.BestAttempt == 0)
+                if (value.Id == 1 && value.BestAttempt == 0 && minimumLevelCount > 0)
                 {
-                    foundIncomplete = true;
-                    if (value.NumberOfGamesPlayed == 0)
-                    {
-                        // An empty trailing entry conveys no information.
-                        continue;
-                    }
+                    value.BestAttempt = int.MaxValue;
+                    value.NumberOfGamesPlayed = Math.Max(1, value.NumberOfGamesPlayed);
                 }
+
+                foundIncomplete = foundIncomplete || !IsCompleted(value);
                 result.Add(value);
             }
+
+            for (int i = result.Count; i < minimumLevelCount; i++)
+            {
+                result.Add(i == 0 ? new GameDataDynamic(1, int.MaxValue, 1) : new GameDataDynamic(i + 1, 0, 0));
+            }
+
             return result.ToArray();
         }
 
         public static int LastUnlockedLevel(GameDataDynamic[] data)
         {
             GameDataDynamic[] clean = Normalize(data);
-            return clean.Length > 0 && clean[clean.Length - 1].BestAttempt == 0 ? clean.Length : clean.Length + 1;
+            return FindLastUnlockedLevel(clean);
+        }
+
+        private static int FindLastUnlockedLevel(GameDataDynamic[] levels)
+        {
+            foreach (GameDataDynamic level in levels)
+            {
+                if (!IsCompleted(level))
+                {
+                    return level.Id;
+                }
+            }
+
+            return levels.Length + 1;
+        }
+
+        private static bool IsCompleted(GameDataDynamic level)
+        {
+            return level.BestAttempt > 0 && level.BestAttempt < int.MaxValue;
+        }
+
+        public static bool HasProgress(GameDataDynamic[] levels)
+        {
+            foreach (GameDataDynamic level in levels)
+            {
+                if (IsCompleted(level) || level.NumberOfGamesPlayed > (level.Id == 1 ? 1 : 0))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public static bool CanPlay(GameDataDynamic[] data, int levelId)
@@ -83,19 +120,17 @@ namespace Zillneuron.Blockmates.Services.SignIn
         }
 
         /// <summary>
-        /// Record ONE attempt. "completed" sets/improves the best step count.
-        /// A failure increments NumberOfGamesPlayed but does not unlock the next level.
-        /// Only already unlocked levels can be attempted.
+        /// Record a completion and update the best step count for an unlocked level.
         /// </summary>
         public static GameDataDynamic[] RecordAttempt(GameDataDynamic[] data, int levelId, int steps = 0)
         {
-            if (levelId < 1 || steps <= 0)
+            if (levelId < 1 || steps <= 0 || steps == int.MaxValue)
             {
                 throw new ArgumentOutOfRangeException(nameof(levelId), "Invalid level or completed step count.");
             }
 
             GameDataDynamic[] clean = Normalize(data);
-            if (!CanPlay(clean, levelId))
+            if (levelId > FindLastUnlockedLevel(clean))
             {
                 throw new InvalidOperationException("Cannot play a locked level.");
             }
@@ -152,8 +187,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
 
             for (int i = 0; i < a.Length; i++)
             {
-                if (a[i].Id != b[i].Id || a[i].BestAttempt != b[i].BestAttempt ||
-                                a[i].NumberOfGamesPlayed != b[i].NumberOfGamesPlayed)
+                if (a[i].Id != b[i].Id || a[i].BestAttempt != b[i].BestAttempt || a[i].NumberOfGamesPlayed != b[i].NumberOfGamesPlayed)
                 {
                     return false;
                 }

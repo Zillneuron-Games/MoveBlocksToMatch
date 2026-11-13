@@ -12,6 +12,7 @@ public class SettingsDialog : ADialog
     private bool musicOn;
     private ELanguageCode languageCode;
     private Action onClickClose;
+    private bool changingAccount;
 
     [SerializeField]
     private GameObject logInButton;
@@ -178,31 +179,51 @@ public class SettingsDialog : ADialog
 
     public void OnClick_SignIn()
     {
-        SignIn();
-    }
-
-    private async void SignIn()
-    {
-        LoginOutcome result = await AccountService.Instance.LogInAsync(confirmReplaceGuestProgress: ConfirmGuestLossAsync);
-
-        CheckIsGuest();
-    }
-
-    private async Task<bool> ConfirmGuestLossAsync()
-    {
-        return true;
+        ChangeAccountAsync(AccountService.Instance.LogInAsync, "Could not sign in. Please try again.");
     }
 
     public void OnClick_SignOut()
     {
-        SignOut();
+        ChangeAccountAsync(AccountService.Instance.LogOutAsync, "Could not sign out. Please try again.");
     }
 
-    private async void SignOut()
+    private async void ChangeAccountAsync(Func<Task> changeAccount, string errorMessage)
     {
-        await AccountService.Instance.LogOutAsync();
+        if (changingAccount)
+        {
+            return;
+        }
 
-        CheckIsGuest();
+        changingAccount = true;
+        try
+        {
+            await changeAccount();
+            soundOn = AccountService.Instance.SoundEnabled;
+            musicOn = AccountService.Instance.MusicEnabled;
+            soundButton.Switch(soundOn);
+            musicButton.Switch(musicOn);
+            languageCode = AccountService.Instance.LanguageCode;
+            languageFlagImage.sprite = languageFlags[(int)languageCode];
+            await LocalizationManager.Instance.Initialize(languageCode);
+            UpdateViewElements();
+        }
+        catch (Exception error)
+        {
+            string message = error is OperationCanceledException ? "Sign-in was cancelled." : errorMessage;
+            if (error is PlatformNotSupportedException)
+            {
+                message = error.Message;
+            }
+
+            ADialogParameters parameters = AlertDialog.CreateDialogParameters(
+                message, "OK", () => ViewContext.Instance.HideDialog<AlertDialog>());
+            ViewContext.Instance.OpenDialog<AlertDialog>(parameters);
+        }
+        finally
+        {
+            CheckIsGuest();
+            changingAccount = false;
+        }
     }
 
     public void OnClick_Close()

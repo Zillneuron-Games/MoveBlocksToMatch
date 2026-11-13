@@ -16,6 +16,7 @@ MonoBehaviour:
   soundEnabled: 1
   musicEnabled: 1
   language: 0
+  levelsCount: 105
   blockMovementSpeed: 16
   stoppingDistance: 0.05
   resultsDelay: 1

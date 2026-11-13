@@ -20,6 +20,9 @@ public sealed class GlobalSettings : ScriptableObject
     private ELanguageCode language;
 
     [Header("Gameplay")]
+    [SerializeField]
+    private int levelsCount;
+
     [SerializeField, Min(0.01f)]
     private float blockMovementSpeed;
 
@@ -75,6 +78,14 @@ public sealed class GlobalSettings : ScriptableObject
         get
         {
             return language;
+        }
+    }
+
+    public int LevelsCount
+    {
+        get
+        {
+            return levelsCount;
         }
     }
 

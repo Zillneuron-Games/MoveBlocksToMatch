@@ -32,9 +32,12 @@ namespace Zillneuron.Blockmates.Services.SignIn
         {
             string key = ActiveKey(LevelPrefix);
             
+            int levelCount = SettingsManager.Instance.Settings.LevelsCount;
             if (!PlayerPrefs.HasKey(key))
             {
-                return Array.Empty<GameDataDynamic>();
+                GameDataDynamic[] initialLevels = ProgressRules.Normalize(null, levelCount);
+                Save(initialLevels);
+                return initialLevels;
             }
 
             string json = PlayerPrefs.GetString(key);
@@ -49,14 +52,22 @@ namespace Zillneuron.Blockmates.Services.SignIn
                 throw new FormatException("Local level JSON has no Levels array.");
             }
 
-            return ProgressRules.Normalize(envelope.Levels);
+            GameDataDynamic[] levels = ProgressRules.Normalize(envelope.Levels, levelCount);
+            if (levels.Length != envelope.Levels.Length ||
+                (levels.Length > 0 && envelope.Levels[0].BestAttempt != levels[0].BestAttempt))
+            {
+                Save(levels);
+            }
+
+            return levels;
         }
 
         public void Save(GameDataDynamic[] levels)
         {
             string key = ActiveKey(LevelPrefix);
 
-            PlayerPrefs.SetString(key, JsonUtility.ToJson(new LevelsData { Levels = ProgressRules.Normalize(levels) }));
+            int levelCount = SettingsManager.Instance.Settings.LevelsCount;
+            PlayerPrefs.SetString(key, JsonUtility.ToJson(new LevelsData { Levels = ProgressRules.Normalize(levels, levelCount) }));
             PlayerPrefs.Save();
         }
 

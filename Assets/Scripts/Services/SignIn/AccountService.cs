@@ -24,6 +24,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
         private const string LastWasGuestKey = "account_wasGuest";
         private const string PendingPrefix = "account_pending_";
         private const string OfflineGuestId = "offline_guest_local_only";
+        private const string RegistrationPrefix = "account_registering_";
         private const string NextLevelId = "account_nextGameId";
 
 
@@ -43,10 +44,8 @@ namespace Zillneuron.Blockmates.Services.SignIn
         private InventoryData inventory;
         private bool ready;
         private bool startupInitialized;
-        private bool hooked;
         private bool changingAccount;
         private bool syncing;
-        private bool startupSyncAttempted;
         private bool pauseSyncAttempted;
         public string PlayerId
         {
@@ -59,18 +58,9 @@ namespace Zillneuron.Blockmates.Services.SignIn
         {
             get
             {
-                return ready && !changingAccount && !signInService.HasPendingLocalAccountChange;
+                return ready && !changingAccount;
             }
         }
-
-        // Unused by the current project.
-        // public bool IsSyncing
-        // {
-        //     get
-        //     {
-        //         return syncing;
-        //     }
-        // }
 
         // Account type is also known while offline; it comes from the selected
         // local save owner rather than UGS network authorization status.
@@ -103,7 +93,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
         {
             get
             {
-                return IsReady && !signInService.IsBusy && signInService.IsAuthorized && string.Equals(signInService.PlayerId, PlayerId, StringComparison.Ordinal);
+                return IsReady && IsLinked && IsCloudIdentitySelected();
             }
         }
 
@@ -119,7 +109,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
         {
             get
             {
-                return ProgressRules.LastUnlockedLevel(levels);
+                return Math.Min(ProgressRules.LastUnlockedLevel(levels), SettingsManager.Instance.Settings.LevelsCount);
             }
         }
 
@@ -176,7 +166,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
         {
             get
             {
-                return inventory.HintsCount;
+                return Inventory.HintsCount;
             }
         }
 
@@ -184,7 +174,8 @@ namespace Zillneuron.Blockmates.Services.SignIn
         {
             get
             {
-                return PlayerPrefs.GetInt(NextLevelId, LastUnlockedLevel);
+                int lastUnlocked = LastUnlockedLevel;
+                return Mathf.Clamp(PlayerPrefs.GetInt(NextLevelId + "." + PlayerId, lastUnlocked), 1, lastUnlocked);
             }
         }
 
@@ -195,184 +186,159 @@ namespace Zillneuron.Blockmates.Services.SignIn
 
         public void SetNextGameId(int gameId)
         {
-            PlayerPrefs.SetInt(NextLevelId, gameId);
+            PlayerPrefs.SetInt(NextLevelId + "." + PlayerId, gameId);
             PlayerPrefs.Save();
         }
 
-        /// <summary>
-        /// Startup: restore a cached identity or a previously chosen local guest.
-        /// A fresh installation stays unselected (NeedsWelcome = true) until a
-        /// button explicitly calls PlayAsGuestAsync or LogInAsync.
-        /// </summary>
+        /// <summary>Restore the last local profile, then reconcile a signed-in account when online.</summary>
         public async Task InitializeAsync()
         {
             await operationGate.WaitAsync();
-            changingAccount = true;
             try
             {
+                if (startupInitialized)
+                {
+                    return;
+                }
+
                 signInService = SignInService.Instance;
                 localStoreService = DataStoreService.Instance;
                 cloudSyncService = DataSyncService.Instance;
-                HookSignInOnce();
-                if (signInService.HasPendingLocalAccountChange)
+                string lastId = PlayerPrefs.GetString(LastAccountKey, string.Empty);
+                if (!string.IsNullOrEmpty(lastId))
                 {
-                    signInService.ApplyPendingLocalChange();
-                }
-
-                Exception authError = null;
-                try
-                {
-                    await signInService.InitializeAsync();
-                }
-                catch (Exception error)
-                {
-                    authError = error;
-                }
-
-                if (authError == null && !string.IsNullOrEmpty(signInService.PlayerId))
-                {
-                    SelectIdentity(signInService.PlayerId, signInService.IsGuest);
-                }
-                else if (PlayerPrefs.HasKey(LastAccountKey))
-                {
-                    string lastId = PlayerPrefs.GetString(LastAccountKey, string.Empty);
-                    if (authError != null && signInService.IsAuthorized && !string.Equals(signInService.PlayerId, lastId, StringComparison.Ordinal))
-                    {
-                        throw new InvalidOperationException("Authenticated a different player before account restoration finished.", authError);
-                    }
-
-                    // Local saves can still be loaded if UGS is unavailable,
-                    // or when a previous offline guest has no UGS session yet.
-                    if (authError != null)
-                    {
-                        Debug.LogWarning("UGS unavailable, loading local account: " + authError.Message);
-                    }
-
                     RestoreLastLocalIdentity();
                 }
-                else
+
+                if (IsLinked)
                 {
-                    // Crucial: do NOT create a guest before the welcome choice.
-                    localStoreService.SelectAccount(null);
-                    levels = Array.Empty<GameDataDynamic>();
-                    settings = SettingsData.CreateInitial();
-                    inventory = InventoryData.CreateInitial();
-                    ready = false;
+                    try
+                    {
+                        await signInService.RestoreSessionAsync(PlayerId);
+                    }
+                    catch (Exception error)
+                    {
+                        Debug.LogWarning("Playing from the local account save: " + error.Message);
+                    }
                 }
 
                 startupInitialized = true;
             }
             finally
             {
-                changingAccount = false;
                 operationGate.Release();
             }
 
-            // Reconcile before the loading view reads the selected player's settings.
-            if (!startupSyncAttempted && IsCloudAvailable)
+            if (IsCloudAvailable)
             {
-                startupSyncAttempted = true;
                 await SyncAsync();
             }
         }
 
-        /// <summary>
-        /// Welcome: Play as Guest. Creates a UGS anonymous account when available,
-        /// but never blocks offline play if Unity Services cannot connect.
-        /// </summary>
-        public async Task PlayAsGuestAsync(CancellationToken cancellationToken = default)
+        /// <summary>Open a local guest slot without contacting Unity Services.</summary>
+        public async Task PlayAsGuestAsync()
         {
-            await operationGate.WaitAsync(cancellationToken);
-            changingAccount = true;
-            try
-            {
-                RequireStartup();
-                if (ready)
-                {
-                    if (IsGuest)
-                    {
-                        return;
-                    }
-
-                    throw new InvalidOperationException("A linked account must log out first.");
-                }
-
-                try
-                {
-                    await signInService.InitializeAsync();
-                    if (signInService.IsLinked)
-                    {
-                        throw new InvalidOperationException("A linked account is already active.");
-                    }
-
-                    if (signInService.IsGuest)
-                    {
-                        SelectIdentity(signInService.PlayerId, nextIsGuest: true);
-                    }
-                    else
-                    {
-                        await signInService.StartNewGuestAsync();
-                    }
-                }
-                catch (Exception error) when (!signInService.IsAuthorized && !signInService.HasPendingLocalAccountChange)
-                {
-                    Debug.LogWarning("Offline guest selected: " + error.Message);
-                    SelectIdentity(OfflineGuestId, nextIsGuest: true);
-                }
-            }
-            finally
-            {
-                changingAccount = false;
-                operationGate.Release();
-            }
-        }
-
-        /// <summary>
-        /// The ONE Log In method for Welcome and Settings. Guest progress stays
-        /// attached to the same Player ID if linking succeeds. If the provider
-        /// already belongs to another UGS account, SignInService invokes the
-        /// confirmation callback BEFORE replacing the current guest identity.
-        /// On confirmation the previous guest slot is discarded, never merged.
-        /// The callback should open a popup and asynchronously return true/false.
-        /// </summary>
-        public async Task<LoginOutcome> LogInAsync(Func<Task<bool>> confirmReplaceGuestProgress = null, CancellationToken cancellationToken = default)
-        {
-            await operationGate.WaitAsync(cancellationToken);
-            changingAccount = true;
-            LoginOutcome result;
+            await operationGate.WaitAsync();
             try
             {
                 RequireStartup();
                 if (IsLinked)
                 {
-                    throw new InvalidOperationException("Log out before logging into another account.");
+                    throw new InvalidOperationException("Sign out before playing as a guest.");
                 }
 
-                // On a device with no UGS session (Welcome or offline guest),
-                // initialize first. For an offline guest, create a UGS guest
-                // identity and migrate that local slot BEFORE linking Google/Apple.
-                await signInService.InitializeAsync();
-                if (ready && PlayerId == OfflineGuestId && !signInService.IsGuest)
+                if (!ready)
                 {
-                    await signInService.StartNewGuestAsync();
+                    OpenGuestProfile();
+                }
+            }
+            finally
+            {
+                operationGate.Release();
+            }
+        }
+
+        /// <summary>Transfer a guest save on registration or merge only levels into a returning account.</summary>
+        public async Task LogInAsync()
+        {
+            await operationGate.WaitAsync();
+            try
+            {
+                RequireStartup();
+                if (IsLinked)
+                {
+                    return;
                 }
 
-                // A freshly created guest with no levels, preferences, or hints
-                // does not need a destructive-change dialog. Meaningful guest
-                // data always requires the caller-provided confirmation.
-                Func<Task<bool>> confirmation = confirmReplaceGuestProgress;
-                if (IsGuest && levels.Length == 0 &&
-                    SettingsData.Same(settings, SettingsData.CreateInitial()) &&
-                    inventory.HintsChangedAtUtcTicks == 0 &&
-                    inventory.HintsCount == SettingsManager.Instance.Settings.StartingHints)
+                changingAccount = true;
+                string guestId = PlayerId;
+                string accountId;
+                GameDataDynamic[] accountLevels;
+                SettingsData accountSettings;
+                InventoryData accountInventory;
+                try
                 {
-                    confirmation = () =>
+                    bool created = await signInService.SignInAsync();
+                    accountId = signInService.PlayerId;
+                    if (string.IsNullOrEmpty(accountId))
                     {
-                        return Task.FromResult(true);
-                    };
+                        throw new InvalidOperationException("Sign-in did not return a player ID.");
+                    }
+
+                    string registrationKey = RegistrationPrefix + accountId;
+                    if (created)
+                    {
+                        PlayerPrefs.SetInt(registrationKey, 1);
+                        PlayerPrefs.Save();
+                    }
+
+                    bool registering = created || PlayerPrefs.HasKey(registrationKey);
+                    LevelsCloudSnapshot cloudLevels = registering ? null : await cloudSyncService.DownloadAsync();
+                    SettingsCloudSnapshot cloudSettings = registering ? null : await cloudSyncService.DownloadSettingsAsync();
+                    InventoryCloudSnapshot cloudInventory = registering ? null : await cloudSyncService.DownloadInventoryAsync();
+
+                    localStoreService.SelectAccount(accountId);
+                    accountLevels = localStoreService.Load();
+                    accountSettings = localStoreService.LoadSettings();
+                    accountInventory = localStoreService.LoadInventory();
+                    if (registering)
+                    {
+                        accountSettings = Settings;
+                        accountInventory = ready ? Inventory : CreateStartingInventory();
+                    }
+                    else
+                    {
+                        accountLevels = ProgressRules.Merge(accountLevels, cloudLevels.Levels);
+                        if (cloudSettings.Exists)
+                        {
+                            accountSettings = SettingsData.Merge(accountSettings, cloudSettings.Data);
+                        }
+
+                        if (cloudInventory.Exists)
+                        {
+                            accountInventory = InventoryData.Merge(accountInventory, cloudInventory.Data);
+                        }
+                    }
+
+                    accountLevels = ProgressRules.Merge(accountLevels, levels);
+                    localStoreService.Save(accountLevels);
+                    localStoreService.SaveSettings(accountSettings);
+                    localStoreService.SaveInventory(accountInventory);
+                    SetPending(accountId, true);
+                    PlayerPrefs.DeleteKey(registrationKey);
+                }
+                catch
+                {
+                    localStoreService.SelectAccount(guestId);
+                    signInService.SignOut();
+                    throw;
                 }
 
-                result = await signInService.LogInAsync(confirmation, cancellationToken);
+                SelectProfile(accountId, false, accountLevels, accountSettings, accountInventory);
+                if (!string.IsNullOrEmpty(guestId) && !string.Equals(guestId, PlayerId, StringComparison.Ordinal))
+                {
+                    DeleteGuestSlot(guestId);
+                }
             }
             finally
             {
@@ -380,71 +346,81 @@ namespace Zillneuron.Blockmates.Services.SignIn
                 operationGate.Release();
             }
 
-            // Await the first sync so an existing account's cloud levels/settings/
-            // inventory are loaded BEFORE the UI navigates to Home. Failure does
-            // not erase the local save and SyncAsync reports it via its event.
-            if (result == LoginOutcome.SignedIn || result == LoginOutcome.SwitchedToExisting)
-            {
-                await SyncAsync();
-            }
-            else if (result == LoginOutcome.GuestLinked)
-            {
-                await SyncAsync(pendingOnly: true);
-            }
-            return result;
+            // Upload the merged save at this account checkpoint. A failed upload
+            // leaves the local account and its pending flag available for retry.
+            await SyncAsync(pendingOnly: true);
         }
 
-        /// <summary>
-        /// Settings: Log Out (linked accounts only). Keep that account's local
-        /// records and pending changes, clear its credentials, then start a fresh
-        /// guest. Offline fallback creates a fresh local-only guest.
-        /// </summary>
+        /// <summary>Keep the account save and start a fresh local guest.</summary>
         public async Task LogOutAsync()
         {
             RequireStartup();
-            if (!IsLinked)
-            {
-                throw new InvalidOperationException("Log Out is only available for linked accounts.");
-            }
-
-            // Best-effort flush, without blocking logout if cloud is unavailable.
-            // Unsynced changes remain stored under the old linked Player ID.
             if (IsCloudAvailable && HasPendingUpload)
             {
                 await SyncAsync(pendingOnly: true);
             }
 
             await operationGate.WaitAsync();
-            changingAccount = true;
             try
             {
-                RequireSelected();
                 if (!IsLinked)
                 {
-                    throw new InvalidOperationException("The selected account changed.");
+                    return;
                 }
 
-                signInService.SignOut(); // Clear UGS and Player Accounts tokens.
+                string accountId = PlayerId;
                 try
                 {
-                    await signInService.StartNewGuestAsync();
+                    DeleteGuestSlot(OfflineGuestId);
+                    OpenGuestProfile();
                 }
-                catch (Exception error) when (!signInService.HasPendingLocalAccountChange && !signInService.IsAuthorized)
+                catch
                 {
-                    // The linked session was already cleared successfully. Play
-                    // can continue offline; a real UGS guest is created later.
-                    Debug.LogWarning("New anonymous UGS account unavailable: " + error.Message);
-                    localStoreService.Delete(OfflineGuestId); // Truly fresh guest, not a prior offline save.
-                    MarkPending(OfflineGuestId, false);
-                    SelectIdentity(OfflineGuestId, nextIsGuest: true);
+                    localStoreService.SelectAccount(accountId);
+                    throw;
                 }
+
+                signInService.SignOut();
             }
             finally
             {
-                changingAccount = false;
                 operationGate.Release();
             }
         }
+
+        private void OpenGuestProfile()
+        {
+            localStoreService.SelectAccount(OfflineGuestId);
+            GameDataDynamic[] guestLevels = localStoreService.Load();
+            SettingsData guestSettings = localStoreService.LoadSettings();
+            InventoryData guestInventory = localStoreService.HasInventory(OfflineGuestId)
+                ? localStoreService.LoadInventory()
+                : CreateStartingInventory();
+            localStoreService.SaveSettings(guestSettings);
+            localStoreService.SaveInventory(guestInventory);
+            SelectProfile(OfflineGuestId, true, guestLevels, guestSettings, guestInventory);
+        }
+
+        private static InventoryData CreateStartingInventory()
+        {
+            return new InventoryData { HintsCount = SettingsManager.Instance.Settings.StartingHints };
+        }
+
+        private void SelectProfile(string id, bool isGuest, GameDataDynamic[] savedLevels, SettingsData savedSettings, InventoryData savedInventory)
+        {
+            SaveLastIdentity(id, isGuest);
+            levels = savedLevels;
+            settings = savedSettings;
+            inventory = savedInventory;
+            ready = true;
+            pauseSyncAttempted = false;
+
+            OnAccountChanged?.Invoke(id);
+            OnLevelsChanged?.Invoke(Levels);
+            OnSettingsChanged?.Invoke(Settings);
+            OnInventoryChanged?.Invoke(Inventory);
+        }
+
 
         public void RecordAttempt(int levelId, int steps = 0)
         {
@@ -452,12 +428,6 @@ namespace Zillneuron.Blockmates.Services.SignIn
             GameDataDynamic[] updated = ProgressRules.RecordAttempt(levels, levelId, steps);
             PersistCurrent(updated);
         }
-
-        // Unused by the current project.
-        // public bool CanPlay(int levelId)
-        // {
-        //     return IsReady && ProgressRules.CanPlay(levels, levelId);
-        // }
 
         public void SetSoundEnabled(bool enabled)
         {
@@ -484,7 +454,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
             SettingsData updated = Settings;
             updated.MusicEnabled = enabled;
             updated.MusicChangedAtUtcTicks = SettingsData.NextTimestamp(updated.MusicChangedAtUtcTicks);
-            
+
             PersistSettings(updated);
         }
 
@@ -501,7 +471,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
         public void SetHints(int value)
         {
             RequirePlayable();
-            
+
             if (value < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(value));
@@ -550,109 +520,6 @@ namespace Zillneuron.Blockmates.Services.SignIn
 
 
         /// <summary>
-        /// Link the current anonymous UGS identity. Same Player ID; local data retained.
-        /// </summary>
-        public async Task LinkGuestAsync(CancellationToken cancellationToken = default)
-        {
-            await operationGate.WaitAsync(cancellationToken);
-            changingAccount = true;
-            try
-            {
-                RequireSelected();
-                if (!IsCloudIdentitySelected())
-                {
-                    throw new InvalidOperationException("Reconnect authentication first.");
-                }
-
-                await signInService.LinkGuestAsync(cancellationToken);
-            }
-            finally
-            {
-                changingAccount = false;
-                operationGate.Release();
-            }
-            await SyncAsync(pendingOnly: true);
-        }
-
-
-        /// <summary>
-        /// Switch to EXISTING Unity Player Account, without transferring guest data.
-        /// SignInService triggers a synchronous save-slot switch through its callback.
-        /// </summary>
-        public async Task<bool> SwitchAccountAsync(bool confirmedGuestLoss, CancellationToken cancellationToken = default)
-        {
-            await operationGate.WaitAsync(cancellationToken);
-            changingAccount = true;
-            bool changed;
-            try
-            {
-                RequireSelected();
-                if (!IsCloudIdentitySelected())
-                {
-                    throw new InvalidOperationException("Reconnect authentication first.");
-                }
-
-                changed = await signInService.SwitchAccountAsync(confirmedGuestLoss, cancellationToken);
-            }
-            finally
-            {
-                changingAccount = false;
-                operationGate.Release();
-            }
-            if (changed)
-            {
-                await SyncAsync();
-            }
-
-            return changed;
-        }
-
-
-        /// <summary>
-        /// Logs out and immediately starts a fresh guest identity.
-        /// Local linked-account saves are retained in separate slots.
-        /// Guest progress is deleted after confirmation.
-        /// </summary>
-        public async Task SignOutAndStartGuestAsync(bool confirmedGuestLoss)
-        {
-            if (IsLinked)
-            {
-                await LogOutAsync();
-                return;
-            }
-
-            // Legacy API: explicitly resetting an existing guest is destructive.
-            if (!confirmedGuestLoss)
-            {
-                throw new InvalidOperationException("Confirm guest progress loss first.");
-            }
-
-            await operationGate.WaitAsync();
-            changingAccount = true;
-            try
-            {
-                RequireSelected();
-                signInService.SignOut(confirmedGuestLoss: true);
-                try
-                {
-                    await signInService.StartNewGuestAsync();
-                }
-                catch (Exception error) when (!signInService.HasPendingLocalAccountChange && !signInService.IsAuthorized)
-                {
-                    Debug.LogWarning("New guest is offline: " + error.Message);
-                    localStoreService.Delete(OfflineGuestId);
-                    MarkPending(OfflineGuestId, false);
-                    SelectIdentity(OfflineGuestId, nextIsGuest: true);
-                }
-            }
-            finally
-            {
-                changingAccount = false;
-                operationGate.Release();
-            }
-        }
-
-        /// <summary>
         /// Synchronize three independent records: levels, settings and inventory.
         /// Each record uses its own Cloud Save write lock. All three are verified
         /// before the account's pending-upload flag is cleared.
@@ -667,7 +534,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
             await operationGate.WaitAsync();
 
             syncing = true;
-            
+
             try
             {
                 if (!IsCloudAvailable)
@@ -689,15 +556,15 @@ namespace Zillneuron.Blockmates.Services.SignIn
                     LevelsCloudSnapshot levelCloud = await cloudSyncService.DownloadAsync();
                     RequireSameCloudIdentity(identity);
                     GameDataDynamic[] mergedLevels = ProgressRules.Merge(levels, levelCloud.Levels);
-                    
+
                     if (!ProgressRules.Same(levels, mergedLevels))
                     {
                         PersistCurrent(mergedLevels);
                     }
 
                     GameDataDynamic[] sendingLevels = ProgressRules.Clone(levels);
-                    bool writeLevels = levelCloud.Exists ? !ProgressRules.Same(levelCloud.Levels, sendingLevels) : sendingLevels.Length != 0;
-                    
+                    bool writeLevels = levelCloud.Exists ? !ProgressRules.Same(levelCloud.Levels, sendingLevels) : ProgressRules.HasProgress(sendingLevels);
+
                     if (writeLevels)
                     {
                         try
@@ -727,7 +594,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
 
                     SettingsData sendingSettings = Settings;
                     bool writeSettings = settingsCloud.Exists ? !SettingsData.Same(settingsCloud.Data, sendingSettings) : !SettingsData.IsDefault(sendingSettings);
-                    
+
                     if (writeSettings)
                     {
                         try
@@ -759,7 +626,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
 
                     InventoryData sendingInventory = Inventory;
                     bool writeInventory = inventoryCloud.Exists ? !InventoryData.Same(inventoryCloud.Data, sendingInventory) : !InventoryData.IsDefault(sendingInventory);
-                    
+
                     if (writeInventory)
                     {
                         try
@@ -777,7 +644,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
                     // first-time creates and local changes during network requests.
                     LevelsCloudSnapshot checkedLevels = await cloudSyncService.DownloadAsync();
                     RequireSameCloudIdentity(identity);
-                    bool levelsMatch = checkedLevels.Exists ? ProgressRules.Same(checkedLevels.Levels, sendingLevels) : sendingLevels.Length == 0;
+                    bool levelsMatch = checkedLevels.Exists ? ProgressRules.Same(checkedLevels.Levels, sendingLevels) : !ProgressRules.HasProgress(sendingLevels);
                     if (!levelsMatch)
                     {
                         continue;
@@ -827,182 +694,11 @@ namespace Zillneuron.Blockmates.Services.SignIn
             }
         }
 
-        private void HookSignInOnce()
-        {
-            if (hooked)
-            {
-                return;
-            }
-
-            if (signInService.ApplyLocalAccountChange != null)
-            {
-                throw new InvalidOperationException("Another component already owns SignInService.ApplyLocalAccountChange. Remove the old progress/authentication integration.");
-            }
-
-            signInService.ApplyLocalAccountChange = OnIdentityChanging;
-            signInService.GuestLinked += OnGuestLinked;
-
-            hooked = true;
-        }
-
-        private void OnGuestLinked(string playerId)
-        {
-            if (!string.Equals(PlayerId, playerId, StringComparison.Ordinal))
-            {
-                throw new InvalidOperationException("Linked account does not match local slot.");
-            }
-
-            SaveLastIdentity(playerId, wasGuest: false);
-            
-            OnAccountChanged?.Invoke(playerId);
-        }
-
-        private void OnIdentityChanging(PlayerIdentityChange change)
-        {
-            // This synchronous callback executes only during the serialized
-            // AccountService account-operation, before gameplay resumes.
-            if (!changingAccount)
-            {
-                throw new InvalidOperationException("Use AccountService to switch accounts, not SignInService directly.");
-            }
-
-            if (string.IsNullOrEmpty(change.CurrentPlayerId))
-            {
-                // Explicit sign-out: discard previous guest, keep linked saves.
-                if (change.DiscardPreviousGuestProgress && !string.IsNullOrEmpty(change.PreviousPlayerId))
-                {
-                    DeleteGuestSlot(change.PreviousPlayerId);
-                }
-
-                localStoreService.SelectAccount(null);
-                levels = Array.Empty<GameDataDynamic>();
-                settings = SettingsData.CreateInitial();
-                inventory = InventoryData.CreateInitial();
-                ready = false;
-
-                PlayerPrefs.DeleteKey(LastAccountKey);
-                PlayerPrefs.DeleteKey(LastWasGuestKey);
-                PlayerPrefs.Save();
-
-                OnAccountChanged?.Invoke(null);
-                OnLevelsChanged?.Invoke(Levels);
-                OnSettingsChanged?.Invoke(Settings);
-                OnInventoryChanged?.Invoke(Inventory);
-
-                return;
-            }
-
-            SelectIdentity(change.CurrentPlayerId, change.CurrentIsGuest);
-        }
-
-        private void SelectIdentity(string nextId, bool nextIsGuest)
-        {
-            if (string.IsNullOrEmpty(nextId))
-            {
-                throw new ArgumentException("Cannot select an empty Player ID.", nameof(nextId));
-            }
-
-            string lastId = PlayerPrefs.GetString(LastAccountKey, string.Empty);
-            bool lastWasGuest = PlayerPrefs.GetInt(LastWasGuestKey, 0) == 1;
-            bool different = !string.Equals(lastId, nextId, StringComparison.Ordinal);
-
-            // Offline-only first launch may contain attempts created before UGS
-            // assigned a guest Player ID. Carry only that temporary guest forward.
-            GameDataDynamic[] offlineToMigrate = null;
-            SettingsData offlineSettingsToMigrate = null;
-            InventoryData offlineInventoryToMigrate = null;
-            
-            if (different && lastId == OfflineGuestId && nextIsGuest &&
-                (localStoreService.HasSave(OfflineGuestId) ||
-                 localStoreService.HasSettings(OfflineGuestId) ||
-                 localStoreService.HasInventory(OfflineGuestId)))
-            {
-                localStoreService.SelectAccount(OfflineGuestId);
-                if (localStoreService.HasSave(OfflineGuestId))
-                {
-                    offlineToMigrate = localStoreService.Load();
-                }
-
-                if (localStoreService.HasSettings(OfflineGuestId))
-                {
-                    offlineSettingsToMigrate = localStoreService.LoadSettings();
-                }
-
-                if (localStoreService.HasInventory(OfflineGuestId))
-                {
-                    offlineInventoryToMigrate = localStoreService.LoadInventory();
-                }
-            }
-
-            localStoreService.SelectAccount(nextId);
-
-            bool hasSettings = localStoreService.HasSettings(nextId);
-            bool initializeInventory = different && lastId != OfflineGuestId && !localStoreService.HasSave(nextId) && !hasSettings && !localStoreService.HasInventory(nextId);
-            GameDataDynamic[] destination = localStoreService.Load();
-            SettingsData settingsDestination = localStoreService.LoadSettings();
-            InventoryData inventoryDestination = localStoreService.LoadInventory();
-            
-            if (offlineToMigrate != null)
-            {
-                destination = ProgressRules.Merge(destination, offlineToMigrate);
-                localStoreService.Save(destination);
-                MarkPending(nextId, true);
-            }
-            
-            if (offlineSettingsToMigrate != null)
-            {
-                settingsDestination = SettingsData.Merge(settingsDestination, offlineSettingsToMigrate);
-                localStoreService.SaveSettings(settingsDestination);
-                MarkPending(nextId, true);
-            }
-            
-            if (offlineInventoryToMigrate != null)
-            {
-                inventoryDestination = InventoryData.Merge(inventoryDestination, offlineInventoryToMigrate);
-                localStoreService.SaveInventory(inventoryDestination);
-                MarkPending(nextId, true);
-            }
-            else if (initializeInventory)
-            {
-                inventoryDestination.HintsCount = SettingsManager.Instance.Settings.StartingHints;
-                if (!InventoryData.IsDefault(inventoryDestination))
-                {
-                    SetPending(nextId, true);
-                }
-
-                localStoreService.SaveInventory(inventoryDestination);
-            }
-
-            if (!hasSettings && offlineSettingsToMigrate == null)
-            {
-                SaveInitialSettings(settingsDestination);
-            }
-
-            // Guest -> existing account: NEVER import guest progress into destination.
-            // The same cleanup also covers an interrupted switch after relaunch.
-            if (different && lastWasGuest && !string.IsNullOrEmpty(lastId))
-            {
-                DeleteGuestSlot(lastId);
-            }
-
-            levels = destination;
-            settings = settingsDestination;
-            inventory = inventoryDestination;
-            ready = true;
-
-            SaveLastIdentity(nextId, nextIsGuest);
-            
-            OnAccountChanged?.Invoke(nextId);
-            OnLevelsChanged?.Invoke(Levels);
-            OnSettingsChanged?.Invoke(Settings);
-            OnInventoryChanged?.Invoke(Inventory);
-        }
-
         private void RestoreLastLocalIdentity()
         {
             string id = PlayerPrefs.GetString(LastAccountKey, string.Empty);
             bool isGuest = PlayerPrefs.GetInt(LastWasGuestKey, 1) == 1;
-            
+
             if (string.IsNullOrEmpty(id))
             {
                 id = OfflineGuestId;
@@ -1017,11 +713,16 @@ namespace Zillneuron.Blockmates.Services.SignIn
                 SaveInitialSettings(settings);
             }
 
-            inventory = localStoreService.LoadInventory();
+            bool initializeGuestInventory = isGuest && !localStoreService.HasInventory(id);
+            inventory = initializeGuestInventory ? CreateStartingInventory() : localStoreService.LoadInventory();
+            if (initializeGuestInventory)
+            {
+                localStoreService.SaveInventory(inventory);
+            }
             ready = true;
-            
+
             SaveLastIdentity(id, isGuest);
-           
+
             OnAccountChanged?.Invoke(id);
             OnLevelsChanged?.Invoke(Levels);
             OnSettingsChanged?.Invoke(Settings);
@@ -1080,6 +781,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
             localStoreService.Delete(playerId);
 
             PlayerPrefs.DeleteKey(PendingKey(playerId));
+            PlayerPrefs.DeleteKey(NextLevelId + "." + playerId);
             PlayerPrefs.Save();
         }
 
@@ -1113,7 +815,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
 
         private bool IsCloudIdentitySelected()
         {
-            return signInService.IsAuthorized && !signInService.HasPendingLocalAccountChange && string.Equals(signInService.PlayerId, PlayerId, StringComparison.Ordinal);
+            return signInService.IsAuthorized && string.Equals(signInService.PlayerId, PlayerId, StringComparison.Ordinal);
         }
 
         private void RequireSameCloudIdentity(string id)
@@ -1143,8 +845,8 @@ namespace Zillneuron.Blockmates.Services.SignIn
         private void RequirePlayable()
         {
             RequireSelected();
-            
-            if (changingAccount || signInService.IsBusy || signInService.HasPendingLocalAccountChange)
+
+            if (changingAccount)
             {
                 throw new InvalidOperationException("An account change is in progress.");
             }

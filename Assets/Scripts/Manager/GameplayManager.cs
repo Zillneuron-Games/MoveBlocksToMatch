@@ -23,6 +23,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
     #region Variables
 
+    private int levelsCount;
     private EDirection lastHint;
     private EErrorType lastError;
 
@@ -60,6 +61,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
     private void Start()
     {
+        levelsCount = SettingsManager.Instance.Settings.LevelsCount;
         ViewContext.Instance.Construct();
     }
 
@@ -548,7 +550,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
         if (temp != null)
         {
-            temp(currentGame.StepsCount, currentGame.BestStepsCount, currentGame.MinimumStepsCount, gameStartData.NextToLoadGame <= LevelStartData.GamesCount);
+            temp(currentGame.StepsCount, currentGame.BestStepsCount, currentGame.MinimumStepsCount, gameStartData.NextToLoadGame <= levelsCount);
         }
     }
 

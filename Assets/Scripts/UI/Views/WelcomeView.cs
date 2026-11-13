@@ -8,6 +8,7 @@ using Zillneuron.Blockmates.Services.SignIn;
 public class WelcomeView : ACompleteView
 {
     private Canvas canvas;
+    private bool choosingAccount;
 
     [SerializeField]
     protected TMP_Text titleText;
@@ -44,26 +45,42 @@ public class WelcomeView : ACompleteView
 
     public void OnClick_LogIn()
     {
-        LogIn();
-    }
-
-    private async void LogIn()
-    {
-        LoginOutcome result = await AccountService.Instance.LogInAsync(confirmReplaceGuestProgress: ConfirmGuestLossAsync);
-    }
-
-    private async Task<bool> ConfirmGuestLossAsync()
-    {
-        return true;
+        ChooseAccountAsync(AccountService.Instance.LogInAsync, "Could not sign in. Please try again.");
     }
 
     public void OnClick_PlayAsGuest()
     {
-        PlayAsGuest();
+        ChooseAccountAsync(AccountService.Instance.PlayAsGuestAsync, "Could not start guest play. Please try again.");
     }
 
-    private async void PlayAsGuest()
+    private async void ChooseAccountAsync(Func<Task> chooseAccount, string errorMessage)
     {
-        await AccountService.Instance.PlayAsGuestAsync();
+        if (choosingAccount)
+        {
+            return;
+        }
+
+        choosingAccount = true;
+        try
+        {
+            await chooseAccount();
+            await LocalizationManager.Instance.Initialize(AccountService.Instance.LanguageCode);
+            ChangeActivityToNext<MainMenuView>();
+        }
+        catch (Exception error)
+        {
+            string message = error is OperationCanceledException ? "Sign-in was cancelled." : errorMessage;
+            if (error is PlatformNotSupportedException)
+            {
+                message = error.Message;
+            }
+
+            ADialogParameters parameters = AlertDialog.CreateDialogParameters(message, "OK", () => ViewContext.Instance.HideDialog<AlertDialog>());
+            ViewContext.Instance.OpenDialog<AlertDialog>(parameters);
+        }
+        finally
+        {
+            choosingAccount = false;
+        }
     }
 }

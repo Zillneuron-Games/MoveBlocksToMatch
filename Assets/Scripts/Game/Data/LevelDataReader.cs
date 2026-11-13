@@ -62,7 +62,7 @@ public static class LevelDataReader
 
     public static LevelData GetGameData(int gameId)
     {
-        if (gameId > LevelStartData.GamesCount || gameId < 1)
+        if (gameId > SettingsManager.Instance.Settings.LevelsCount || gameId < 1)
         {
             return null;
         }
