@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Zillneuron.Blockmates.Services.SignIn;
 using Zillneuron.UILayout;
 
 public class GameplayManager : MonoBehaviour, ITileObjectProvider
@@ -24,6 +25,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
     #region Variables
 
     private int levelsCount;
+    private bool hintUsed;
     private EDirection lastHint;
     private EErrorType lastError;
 
@@ -61,6 +63,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
     private void Start()
     {
+        hintUsed = true;
         levelsCount = SettingsManager.Instance.Settings.LevelsCount;
         ViewContext.Instance.Construct();
     }
@@ -413,6 +416,7 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
     private void HandleTransitOver(object sender, EventArgs args)
     {
+        hintUsed = true;
         OnStepsUpdate();
         ChangeGameplayState(EGameplayState.Gameplay);
     }
@@ -440,8 +444,20 @@ public class GameplayManager : MonoBehaviour, ITileObjectProvider
 
     private void HandleHintButtonClick()
     {
-        lastHint = GetHint();
+        AccountService account = AccountService.Instance;
+        if (!hintUsed || gameplayState != EGameplayState.Gameplay || !account.IsReady || account.Hints == 0 || onShowHint == null)
+        {
+            return;
+        }
 
+        EDirection direction = GetHint();
+        if (direction == EDirection.None || !account.TrySpendHints())
+        {
+            return;
+        }
+
+        hintUsed = false;
+        lastHint = direction;
         OnShowHint();
     }
 

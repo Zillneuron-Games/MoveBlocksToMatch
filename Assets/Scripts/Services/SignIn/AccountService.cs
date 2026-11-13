@@ -25,6 +25,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
         private const string PendingPrefix = "account_pending_";
         private const string OfflineGuestId = "offline_guest_local_only";
         private const string RegistrationPrefix = "account_registering_";
+        private const string HintPurchasePrefix = "hint_purchase_";
         private const string NextLevelId = "account_nextGameId";
 
 
@@ -46,6 +47,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
         private bool startupInitialized;
         private bool changingAccount;
         private bool syncing;
+        private bool hintPurchasePending;
         private bool pauseSyncAttempted;
         public string PlayerId
         {
@@ -270,6 +272,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
                     return;
                 }
 
+                RequireNoHintPurchase();
                 changingAccount = true;
                 string guestId = PlayerId;
                 string accountId;
@@ -368,6 +371,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
                     return;
                 }
 
+                RequireNoHintPurchase();
                 string accountId = PlayerId;
                 try
                 {
@@ -501,6 +505,64 @@ namespace Zillneuron.Blockmates.Services.SignIn
         }
 
 
+        internal bool TryBeginHintPurchase()
+        {
+            if (!IsReady || hintPurchasePending)
+            {
+                return false;
+            }
+
+            hintPurchasePending = true;
+            return true;
+        }
+
+        internal void EndHintPurchase()
+        {
+            hintPurchasePending = false;
+        }
+
+        private void RequireNoHintPurchase()
+        {
+            if (hintPurchasePending)
+            {
+                throw new InvalidOperationException("Wait for the hint purchase to finish before switching accounts.");
+            }
+        }
+
+        /// <summary>Save a store grant before the purchase callback returns to the store.</summary>
+        internal void GrantPurchasedHints(int amount, string transactionId)
+        {
+            if (string.IsNullOrWhiteSpace(transactionId))
+            {
+                throw new ArgumentException("A store transaction ID is required.", nameof(transactionId));
+            }
+
+            if (amount <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(amount));
+            }
+
+            string purchaseKey = HintPurchasePrefix + transactionId;
+            if (PlayerPrefs.HasKey(purchaseKey))
+            {
+                return;
+            }
+
+            string playerId = PlayerId;
+            InventoryData updated = Inventory;
+            updated.HintsCount = checked(updated.HintsCount + amount);
+            updated.HintsChangedAtUtcTicks = InventoryData.NextTimestamp(updated.HintsChangedAtUtcTicks);
+
+            // Flush the transaction marker and balance together with the pending flag.
+            PlayerPrefs.SetInt(purchaseKey, 1);
+            PersistInventory(updated);
+
+            if (IsCloudAvailable)
+            {
+                _ = SyncAsync(pendingOnly: true, expectedPlayerId: playerId);
+            }
+        }
+
         public bool TrySpendHints(int amount = 1)
         {
             if (amount <= 0)
@@ -529,7 +591,7 @@ namespace Zillneuron.Blockmates.Services.SignIn
             return SyncAsync(pendingOnly: false);
         }
 
-        private async Task<bool> SyncAsync(bool pendingOnly)
+        private async Task<bool> SyncAsync(bool pendingOnly, string expectedPlayerId = null)
         {
             await operationGate.WaitAsync();
 
@@ -537,7 +599,8 @@ namespace Zillneuron.Blockmates.Services.SignIn
 
             try
             {
-                if (!IsCloudAvailable)
+                if (!IsCloudAvailable ||
+                    (expectedPlayerId != null && !string.Equals(PlayerId, expectedPlayerId, StringComparison.Ordinal)))
                 {
                     return false;
                 }
@@ -652,7 +715,9 @@ namespace Zillneuron.Blockmates.Services.SignIn
 
                     SettingsCloudSnapshot checkedSettings = await cloudSyncService.DownloadSettingsAsync();
                     RequireSameCloudIdentity(identity);
-                    bool settingsMatch = checkedSettings.Exists ? SettingsData.Same(checkedSettings.Data, sendingSettings) : SettingsData.IsDefault(sendingSettings) && SettingsData.IsDefault(checkedSettings.Data);
+                    bool settingsMatch = checkedSettings.Exists
+                        ? SettingsData.Same(checkedSettings.Data, sendingSettings)
+                        : SettingsData.IsDefault(sendingSettings);
                     if (!settingsMatch)
                     {
                         continue;
@@ -660,7 +725,9 @@ namespace Zillneuron.Blockmates.Services.SignIn
 
                     InventoryCloudSnapshot checkedInventory = await cloudSyncService.DownloadInventoryAsync();
                     RequireSameCloudIdentity(identity);
-                    bool inventoryMatch = checkedInventory.Exists ? InventoryData.Same(checkedInventory.Data, sendingInventory) : InventoryData.IsDefault(sendingInventory) && InventoryData.IsDefault(checkedInventory.Data);
+                    bool inventoryMatch = checkedInventory.Exists
+                        ? InventoryData.Same(checkedInventory.Data, sendingInventory)
+                        : InventoryData.IsDefault(sendingInventory);
                     if (!inventoryMatch)
                     {
                         continue;

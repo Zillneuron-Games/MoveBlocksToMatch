@@ -4,6 +4,7 @@ using TMPro;
 using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
 using UnityEngine.UI;
+using Zillneuron.Blockmates.Services.SignIn;
 using Zillneuron.UILayout;
 
 public class GameplayView : ACompleteView
@@ -14,10 +15,25 @@ public class GameplayView : ACompleteView
     private GameplayManager gameplayManager;
 
     [SerializeField]
+    private PurchaseManager purchaseManager;
+
+    [SerializeField]
     private TMP_Text stepsText;
 
     [SerializeField]
     private TMP_Text levelText;
+
+    [SerializeField]
+    private TMP_Text hintsCountText;
+
+    [SerializeField]
+    private Image hintIndicator;
+
+    [SerializeField]
+    private Sprite hintIndicatorBackground;
+
+    [SerializeField]
+    private Sprite noHintIndicatorBackground;
 
     [SerializeField]
     private Image[] directionImages;
@@ -63,6 +79,11 @@ public class GameplayView : ACompleteView
         gameplayManager.onQuitGame += QuitGame;
 
         gameplayManager.StartGame();
+
+        AccountService.Instance.OnInventoryChanged -= HandleInventoryChanged;
+        AccountService.Instance.OnInventoryChanged += HandleInventoryChanged;
+
+        UpdateHints();
     }
 
     protected override void OnFinish()
@@ -78,6 +99,7 @@ public class GameplayView : ACompleteView
         gameplayManager.onWinGame -= WinGame;
         gameplayManager.onEndGame -= EndGame;
         gameplayManager.onQuitGame -= QuitGame;
+        AccountService.Instance.OnInventoryChanged -= HandleInventoryChanged;
 
         canvas.enabled = false;
     }
@@ -94,6 +116,18 @@ public class GameplayView : ACompleteView
         base.OnResume();
 
         InputManager.Instance.Enable();
+    }
+
+    private void UpdateHints()
+    {
+        int hintsCount = AccountService.Instance.Hints;
+        hintsCountText.text = hintsCount.ToString();
+        hintIndicator.sprite = hintsCount > 0 ? hintIndicatorBackground : noHintIndicatorBackground;
+    }
+
+    private void HandleInventoryChanged(InventoryData inventory)
+    {
+        UpdateHints();
     }
 
     private void StartGame(int level, int steps)
@@ -245,6 +279,19 @@ public class GameplayView : ACompleteView
 
     public void OnClick_Hint()
     {
+        AccountService account = AccountService.Instance;
+        if (!account.IsReady)
+        {
+            return;
+        }
+
+        if (account.Hints == 0)
+        {
+            ADialogParameters parameters = ShopDialog.CreateDialogParameters(purchaseManager);
+            ViewContext.Instance.OpenDialog<ShopDialog>(parameters);
+            return;
+        }
+
         InputEventArgs args = new InputEventArgs(EInputEvent.Hint);
         InputManager.Instance.ButtonPressed(this, args);
     }
