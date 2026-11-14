@@ -307,11 +307,10 @@
       "url": "https://packages.unity.com"
     },
     "com.zillneuron.ads": {
-      "version": "https://github.com/Zillneuron-Packages/Ads.git",
+      "version": "file:com.zillneuron.ads",
       "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "a932041d399bb413dd76d6eb0204338cf6a8555b"
+      "source": "embedded",
+      "dependencies": {}
     },
     "com.zillneuron.inapppurchase": {
       "version": "https://github.com/Zillneuron-Packages/InAppPurchase.git",
@@ -321,11 +320,10 @@
       "hash": "39f2b1e0ad2b4fa6c171726ca81c5877cbc35d61"
     },
     "com.zillneuron.uilayout": {
-      "version": "https://haykhhakobyan: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@github.com/Zillneuron-Packages/UILayout.git",
+      "version": "file:com.zillneuron.uilayout",
       "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "d8285c17f31acaacaaa1d3e39d032648dbc55205"
+      "source": "embedded",
+      "dependencies": {}
     },
     "com.zillneuron.utilities": {
       "version": "https://haykhhakobyan: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@github.com/Zillneuron-Packages/Utilities.git",

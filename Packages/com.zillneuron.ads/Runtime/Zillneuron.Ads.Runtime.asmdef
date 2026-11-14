@@ -1,0 +1,17 @@
+{
+    "name": "Zillneuron.Ads.Runtime",
+    "rootNamespace": "",
+    "references": [
+        "GUID:4f7e07b1f0f05477db926c632fb6a5d3",
+        "GUID:760a4c7888534400e882b82c5b3fba06"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

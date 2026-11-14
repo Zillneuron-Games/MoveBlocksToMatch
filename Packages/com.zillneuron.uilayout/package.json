@@ -1,0 +1,30 @@
+{
+  "name": "com.zillneuron.uilayout",
+  "version": "0.0.1",
+  "displayName": "Zillneuron UI Layout",
+  "description": "The Zillneuron UI Layout package contains functionality for ui system quick construction.",
+  "unity": "2021.3",
+  "unityRelease": "0f1",
+  "documentationUrl": "https://zillneuron.com/",
+  "changelogUrl": "https://zillneuron.com/changelog.html",
+  "licensesUrl": "https://zillneuron.com/licensing.html",
+  "dependencies": {},
+  "keywords": [
+    "UI",
+    "Layout"
+  ],
+  "author": {
+    "name": "Zillneuron",
+    "email": "zillneuron@gmail.com",
+    "url": "https://www.zillneuron.com"
+  },
+  "samples": [
+    {
+      "displayName": "Sample Scene",
+      "description": "Sample scene contains examples of code usage.",
+      "path": "Samples~/Scenes"
+    }
+  ],
+  "type": "git",
+  "_fingerprint": "d8285c17f31acaacaaa1d3e39d032648dbc55205"
+}

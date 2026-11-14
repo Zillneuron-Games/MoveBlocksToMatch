@@ -1,0 +1,29 @@
+{
+  "name": "com.zillneuron.ads",
+  "version": "0.0.1",
+  "displayName": "Zillneuron Ads",
+  "description": "The Zillneuron Ads is a module that contains methods for ads showing.",
+  "unity": "2021.3",
+  "unityRelease": "0f1",
+  "documentationUrl": "https://zillneuron.com/",
+  "changelogUrl": "https://zillneuron.com/changelog.html",
+  "licensesUrl": "https://zillneuron.com/licensing.html",
+  "dependencies": {},
+  "keywords": [
+    "Ads"
+  ],
+  "author": {
+    "name": "Zillneuron",
+    "email": "zillneuron@gmail.com",
+    "url": "https://www.zillneuron.com"
+  },
+  "samples": [
+    {
+      "displayName": "Sample Scene",
+      "description": "Sample scene contains examples of code usage.",
+      "path": "Samples~/Scenes"
+    }
+  ],
+  "type": "git",
+  "_fingerprint": "a932041d399bb413dd76d6eb0204338cf6a8555b"
+}
